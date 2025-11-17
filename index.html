@@ -27,20 +27,22 @@
   #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
   /* Watermark */
-  #watermark {
+ #watermark {
     position: absolute;
-    top:50%; left:50%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    font-size:2vw;
-    color: rgba(238,13,13,0.2);
-    pointer-events:none;
-    z-index:12;
+    font-size: 2vw;
+    color: rgba(238,13,13,1); /* 100% opaque */
+    font-weight: bold;         /* texte en gras */
+    pointer-events: none;
+    z-index: 12;
     white-space: nowrap;
     user-select: none;
-    display:none;
-    opacity:1
-  }
+    display: none;
+    opacity: 1;
+}
 
   /* Frame noire pour boutons vidéo */
   .videoControls {
