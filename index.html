@@ -42,7 +42,7 @@
   .file::before { content: "📄 "; }
   .locked::before { content: "🔒 "; }
 
-  /* --- FRAME / OVERLAY --- */
+  /* --- OVERLAY --- */
   #viewerOverlay {
     position: fixed;
     top: 0; left: 0;
@@ -55,30 +55,33 @@
   }
 
   #viewerBox {
-    background: #fff;
-    width: 80%;
-    height: 80%;
-    border-radius: 10px;
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
   }
 
   #viewerClose {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: -40px;
+    right: 0;
     font-size: 28px;
     cursor: pointer;
     font-weight: bold;
-    color: #333;
+    color: #fff;
     z-index: 10;
   }
 
-  #viewerContent {
-    width: 100%;
-    height: 100%;
-    border: none;
+  #viewerImage {
+    display: block;
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+  }
+
+  /* overlay transparent au-dessus de l'image */
+  #imageBlocker {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 5;
   }
 </style>
 </head>
@@ -88,10 +91,11 @@
 <div id="fileTree"></div>
 
 <!-- OVERLAY VIEWER -->
-<div id="viewerOverlay" oncontextmenu="return false;">
+<div id="viewerOverlay">
   <div id="viewerBox">
     <div id="viewerClose" onclick="closeViewer()">X</div>
-    <iframe id="viewerContent" sandbox="allow-same-origin"></iframe>
+    <img id="viewerImage" src="">
+    <div id="imageBlocker"></div>
   </div>
 </div>
 
@@ -146,13 +150,26 @@ function createTree(container, obj) {
 }
 
 function openViewer(path) {
-  document.getElementById("viewerContent").src = path;
-  document.getElementById("viewerOverlay").style.display = "flex";
+  const viewerOverlay = document.getElementById("viewerOverlay");
+  const viewerImage = document.getElementById("viewerImage");
+  const imageBlocker = document.getElementById("imageBlocker");
+
+  viewerImage.src = path;
+  viewerOverlay.style.display = "flex";
+
+  // Ajuste la taille du blocker pour être identique à l'image
+  viewerImage.onload = () => {
+    imageBlocker.style.width = viewerImage.offsetWidth + "px";
+    imageBlocker.style.height = viewerImage.offsetHeight + "px";
+  };
 }
 
 function closeViewer() {
-  document.getElementById("viewerOverlay").style.display = "none";
-  document.getElementById("viewerContent").src = "";
+  const viewerOverlay = document.getElementById("viewerOverlay");
+  const viewerImage = document.getElementById("viewerImage");
+
+  viewerOverlay.style.display = "none";
+  viewerImage.src = "";
 }
 
 createTree(document.getElementById('fileTree'), files);
