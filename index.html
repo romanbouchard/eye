@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - v11</title>
+<title>Explorateur de fichiers - v12</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -17,48 +17,44 @@
   .file::before { content: "📄 "; }
   .locked::before { content: "🔒 "; }
 
-  #viewerOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.4s ease; }
-  #viewerOverlay.show { display: flex; opacity: 1; }
-  #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius: 10px; transform: scale(0.8); transition: transform 0.4s ease; display: inline-block; }
+  #viewerOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; backdrop-filter:blur(4px); opacity:0; transition: opacity 0.4s ease; }
+  #viewerOverlay.show { display:flex; opacity:1; }
+  #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius:10px; transform: scale(0.8); transition: transform 0.4s ease; display:inline-block; }
   #viewerOverlay.show #viewerBox { transform: scale(1); }
-  #viewerClose { position: absolute; top: -40px; right: 0; font-size: 28px; cursor: pointer; font-weight: bold; color: #fff; z-index: 10; }
-  #viewerImage, #viewerVideo { display: block; max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 6px 15px rgba(0,0,0,0.5); transition: opacity 0.4s ease; opacity: 0; }
-  #viewerImage.show, #viewerVideo.show { opacity: 1; }
-  #imageBlocker { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
+  #viewerClose { position: absolute; top:-40px; right:0; font-size:28px; cursor:pointer; font-weight:bold; color:#fff; z-index:10; }
+  #viewerImage, #viewerVideo { display:block; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 6px 15px rgba(0,0,0,0.5); transition: opacity 0.4s ease; opacity:0; }
+  #viewerImage.show, #viewerVideo.show { opacity:1; }
+  #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
-  /* Watermark @roman_manero */
-/* Watermark @roman_manero */
-#watermark {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 20vw; /* taille relative à la largeur de l'écran */
-  color: rgba(200, 200, 200, 0.2); /* gris pâle, 20% opacity */
-  pointer-events: none; /* ne bloque pas les clics */
-  z-index: 0; /* derrière tout le contenu */
-  white-space: nowrap; 
-  user-select: none;
-  text-align: center;
-}
-
+  /* Watermark */
+  #watermark {
+    position: absolute;
+    top:50%; left:50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size:10vw;
+    color: rgba(200,200,200,0.2);
+    pointer-events:none;
+    z-index:12;
+    white-space: nowrap;
+    user-select: none;
+    display:none;
+  }
 
   /* Frame noire pour boutons vidéo */
   .videoControls {
     position: absolute;
-    bottom: 10px;
-    left: 50%;
+    bottom:10px; left:50%;
     transform: translateX(-50%);
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    z-index: 15;
+    display:flex; gap:15px; align-items:center;
+    z-index:15;
     background: rgba(0,0,0,0.7);
-    padding: 10px 20px;
-    border-radius: 10px;
-      opacity: 1
+    padding:10px 20px;
+    border-radius:10px;
+    opacity:1;
+    transition: opacity 0.5s ease;
   }
-  .videoButton { width: 60px; height: 60px; cursor: pointer; }
+  .videoButton { width:60px; height:60px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -71,9 +67,8 @@
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
+    <div id="watermark">@roman_manero</div>
 
-<div id="watermark">@roman_manero</div>
-    
     <!-- Boutons vidéo -->
     <div class="videoControls" id="videoControls" style="display:none;">
       <img id="btnMinus5" class="videoButton" src="par/moins5.png">
@@ -86,14 +81,14 @@
 
 <script>
 const files = {
-  "images": { "eau_de_toilette00.png": { path: "images/eau_de_toilette00.png", pin: null }, "pin_6969.webp": { path: "images/pin_6969.webp", pin: "6969" } },
-  "videos": { "11mamoutlaineuxdanmontroupersonel.mp4": { path: "videos/11mamoutlaineuxdanmontroupersonel.mp4", pin: "pepperoni" } }
+  "images": { "eau_de_toilette00.png": { path: "images/eau_de_toilette00.png", pin:null }, "pin_6969.webp": { path:"images/pin_6969.webp", pin:"6969" } },
+  "videos": { "11mamoutlaineuxdanmontroupersonel.mp4": { path:"videos/11mamoutlaineuxdanmontroupersonel.mp4", pin:"pepperoni" } }
 };
 
-function createTree(container, obj) {
-  for (let key in obj) {
-    const item = document.createElement('div');
-    if(typeof obj[key] === 'object' && obj[key].path===undefined){
+function createTree(container,obj){
+  for(let key in obj){
+    const item=document.createElement('div');
+    if(typeof obj[key]==='object' && obj[key].path===undefined){
       item.textContent=key; item.className='folder';
       const nested=document.createElement('div'); nested.className='nested';
       createTree(nested,obj[key]);
@@ -102,7 +97,10 @@ function createTree(container, obj) {
     } else {
       const file=obj[key]; item.textContent=key; item.className='file';
       if(file.pin)item.classList.add('locked');
-      item.onclick=()=>{ if(file.pin){ const p=prompt("Entrez le PIN :"); if(p!==file.pin){alert("PIN incorrect !"); return;} } openViewer(file.path); };
+      item.onclick=()=>{
+        if(file.pin){ const p=prompt("Entrez le PIN :"); if(p!==file.pin){alert("PIN incorrect !"); return;} }
+        openViewer(file.path);
+      };
       container.appendChild(item);
     }
   }
@@ -117,6 +115,7 @@ function openViewer(path){
   const btnPlayPause=document.getElementById("btnPlayPause");
   const btnPlus15=document.getElementById("btnPlus15");
   const btnMute=document.getElementById("btnMute");
+  const watermark=document.getElementById("watermark");
 
   const oldVideo=document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
@@ -125,19 +124,31 @@ function openViewer(path){
   const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
 
+  watermark.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "block":"none";
+
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
     img.style.display="block"; img.classList.remove("show"); img.src=path;
-    img.onload=()=>{ blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show"); };
+    img.onload=()=>{
+      blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show");
+      watermark.style.width = img.offsetWidth*0.9+"px";
+      watermark.style.left = img.offsetLeft + img.offsetWidth/2 + "px";
+      watermark.style.top = img.offsetTop + img.offsetHeight/2 + "px";
+    };
   } else if(["mp4","webm","ogg"].includes(ext)){
     img.style.display="none";
     const video=document.createElement("video");
-    video.id="viewerVideo"; video.src=path; video.autoplay=true; video.style.maxWidth="90vw"; video.style.maxHeight="90vh";
-    video.style.borderRadius="8px"; video.style.boxShadow="0 6px 15px rgba(0,0,0,0.5)"; video.style.position="relative"; video.classList.add("show");
+    video.id="viewerVideo"; video.src=path; video.autoplay=true;
+    video.style.maxWidth="90vw"; video.style.maxHeight="90vh"; video.style.borderRadius="8px";
+    video.style.boxShadow="0 6px 15px rgba(0,0,0,0.5)"; video.style.position="relative"; video.classList.add("show");
     document.getElementById("viewerBox").appendChild(video);
 
     video.onloadedmetadata=()=>{
       blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
       controls.style.display="flex";
+
+      watermark.style.width = video.offsetWidth*0.9+"px";
+      watermark.style.left = video.offsetLeft + video.offsetWidth/2 + "px";
+      watermark.style.top = video.offsetTop + video.offsetHeight/2 + "px";
 
       let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
 
@@ -154,7 +165,6 @@ function closeViewer(){
   const img=document.getElementById("viewerImage");
   const video=document.getElementById("viewerVideo");
   const controls=document.getElementById("videoControls");
-
   img.classList.remove("show"); if(video) video.classList.remove("show");
   overlay.classList.remove("show"); controls.style.display="none";
   controls.querySelectorAll('img').forEach(b=>b.onclick=null);
@@ -163,23 +173,15 @@ function closeViewer(){
 
 createTree(document.getElementById('fileTree'), files);
 
-  let fadeTimeout;
-
-function showControls() {
-  const controls = document.getElementById("videoControls");
-  controls.style.transition = "opacity 0.5s ease";
-  controls.style.opacity = 1;
-
+// FADE OUT boutons après 5 sec de non mouvement
+let fadeTimeout;
+function showControls(){
+  const controls=document.getElementById("videoControls");
+  controls.style.opacity=1;
   clearTimeout(fadeTimeout);
-  fadeTimeout = setTimeout(() => {
-    controls.style.opacity = 0;
-  }, 5000); // 5 secondes sans mouvement
+  fadeTimeout=setTimeout(()=>{ controls.style.opacity=0; },5000);
 }
-
-// Appliquer sur tout le viewer
-const viewerBox = document.getElementById("viewerBox");
-viewerBox.addEventListener("mousemove", showControls);
-  
+document.getElementById("viewerBox").addEventListener("mousemove", showControls);
 </script>
 
 </body>
