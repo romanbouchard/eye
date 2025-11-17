@@ -18,7 +18,7 @@
   #fileTree {
     background: #fff;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
     padding: 15px;
     max-width: 400px;
   }
@@ -28,15 +28,30 @@
     cursor: pointer;
     padding: 6px 12px;
     border-radius: 5px;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.2s;
   }
 
   .folder { font-weight: bold; color: #1e40af; }
   .file { color: #2563eb; }
 
-  .folder:hover, .file:hover { background: #dbeafe; }
+  .folder:hover, .file:hover {
+    background: #dbeafe;
+    transform: scale(1.03);
+  }
 
-  .nested { margin-left: 20px; display: none; }
+  .nested {
+    margin-left: 20px;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+    max-height: 0;
+  }
+
+  .nested.show {
+    display: block;
+    opacity: 1;
+    max-height: 500px;
+  }
 
   .folder::before { content: "📁 "; }
   .file::before { content: "📄 "; }
@@ -52,10 +67,25 @@
     justify-content: center;
     align-items: center;
     backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  #viewerOverlay.show {
+    display: flex;
+    opacity: 1;
   }
 
   #viewerBox {
     position: relative;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    border-radius: 10px;
+    transform: scale(0.8);
+    transition: transform 0.4s ease;
+  }
+
+  #viewerOverlay.show #viewerBox {
+    transform: scale(1);
   }
 
   #viewerClose {
@@ -74,6 +104,13 @@
     max-width: 90vw;
     max-height: 90vh;
     border-radius: 8px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+    transition: opacity 0.4s ease;
+    opacity: 0;
+  }
+
+  #viewerImage.show {
+    opacity: 1;
   }
 
   /* overlay transparent au-dessus de l'image */
@@ -121,7 +158,11 @@ function createTree(container, obj) {
       createTree(nested, obj[key]);
 
       item.onclick = () => {
-        nested.style.display = nested.style.display === 'none' ? 'block' : 'none';
+        if (nested.classList.contains('show')) {
+          nested.classList.remove('show');
+        } else {
+          nested.classList.add('show');
+        }
       };
 
       container.appendChild(item);
@@ -150,26 +191,29 @@ function createTree(container, obj) {
 }
 
 function openViewer(path) {
-  const viewerOverlay = document.getElementById("viewerOverlay");
-  const viewerImage = document.getElementById("viewerImage");
-  const imageBlocker = document.getElementById("imageBlocker");
+  const overlay = document.getElementById("viewerOverlay");
+  const img = document.getElementById("viewerImage");
+  const blocker = document.getElementById("imageBlocker");
 
-  viewerImage.src = path;
-  viewerOverlay.style.display = "flex";
+  img.classList.remove("show");
+  img.src = path;
+  overlay.classList.add("show");
 
-  // Ajuste la taille du blocker pour être identique à l'image
-  viewerImage.onload = () => {
-    imageBlocker.style.width = viewerImage.offsetWidth + "px";
-    imageBlocker.style.height = viewerImage.offsetHeight + "px";
+  img.onload = () => {
+    blocker.style.width = img.offsetWidth + "px";
+    blocker.style.height = img.offsetHeight + "px";
+    img.classList.add("show");
   };
 }
 
 function closeViewer() {
-  const viewerOverlay = document.getElementById("viewerOverlay");
-  const viewerImage = document.getElementById("viewerImage");
+  const overlay = document.getElementById("viewerOverlay");
+  const img = document.getElementById("viewerImage");
 
-  viewerOverlay.style.display = "none";
-  viewerImage.src = "";
+  img.classList.remove("show");
+  overlay.classList.remove("show");
+
+  setTimeout(() => { img.src = ""; }, 400);
 }
 
 createTree(document.getElementById('fileTree'), files);
