@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - √14</title>
+<title>Explorateur de fichiers - √15</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -26,50 +26,30 @@
   #viewerImage.show, #viewerVideo.show { opacity:1; }
   #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
-  /* Watermark */
- #watermark {
+  /* Watermark container centré */
+  #watermarkContainer {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    text-align: center;
-    font-size: 2vw;
-    color: rgba(238,13,13,1); /* 100% opaque */
-    font-weight: bold;         /* texte en gras */
+    display: flex;
+    align-items: center;
     pointer-events: none;
     z-index: 12;
     white-space: nowrap;
-    user-select: none;
-    display: none;
-    opacity: 1;
-}
+  }
 
-  #watermarkContainer {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 12;
-}
+  #watermark {
+    font-size: 2vw;
+    color: rgba(238,13,13,1); /* 100% opaque */
+    font-weight: bold;         /* texte en gras */
+    margin-right: 1vw;         /* espace entre texte et image */
+  }
 
-#watermark {
-  font-size: 2vw;
-  color: rgba(238,13,13,0.8);
-  font-weight: bold;
-  margin-right: 10px; /* espace entre texte et image */
-  white-space: nowrap;
-  user-select: none;
-}
-
-#watermarkImage {
-  height: 2vw; /* même taille que le texte pour rester proportionnel */
-  width: auto;
-}
-
+  #watermarkImage {
+    height: 4vw; /* plus gros que le texte */
+    width: auto;
+  }
 
   /* Frame noire pour boutons vidéo */
   .videoControls {
@@ -97,11 +77,11 @@
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
-    <div id="watermarkContainer">
-  <span id="watermark">@roman_manero</span>
-  <img id="watermarkImage" src="par/watermark.png" alt="Logo" />
-</div>
 
+    <div id="watermarkContainer">
+      <span id="watermark">@roman_manero</span>
+      <img id="watermarkImage" src="par/watermark.png" alt="Logo" />
+    </div>
 
     <!-- Boutons vidéo -->
     <div class="videoControls" id="videoControls" style="display:none;">
@@ -149,7 +129,7 @@ function openViewer(path){
   const btnPlayPause=document.getElementById("btnPlayPause");
   const btnPlus15=document.getElementById("btnPlus15");
   const btnMute=document.getElementById("btnMute");
-  const watermark=document.getElementById("watermark");
+  const watermarkContainer=document.getElementById("watermarkContainer");
 
   const oldVideo=document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
@@ -157,17 +137,11 @@ function openViewer(path){
 
   const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
-
-  watermark.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "block":"none";
+  watermarkContainer.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "flex":"none";
 
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
     img.style.display="block"; img.classList.remove("show"); img.src=path;
-    img.onload=()=>{
-      blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show");
-      watermark.style.width = img.offsetWidth*0.9+"px";
-      watermark.style.left = img.offsetLeft + img.offsetWidth/2 + "px";
-      watermark.style.top = img.offsetTop + img.offsetHeight/2 + "px";
-    };
+    img.onload=()=>{ blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show"); };
   } else if(["mp4","webm","ogg"].includes(ext)){
     img.style.display="none";
     const video=document.createElement("video");
@@ -179,10 +153,6 @@ function openViewer(path){
     video.onloadedmetadata=()=>{
       blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
       controls.style.display="flex";
-
-      watermark.style.width = video.offsetWidth*0.9+"px";
-      watermark.style.left = video.offsetLeft + video.offsetWidth/2 + "px";
-      watermark.style.top = video.offsetTop + video.offsetHeight/2 + "px";
 
       let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
 
