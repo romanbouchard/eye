@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - √13</title>
+<title>Explorateur de fichiers - √14</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -44,6 +44,33 @@
     opacity: 1;
 }
 
+  #watermarkContainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 12;
+}
+
+#watermark {
+  font-size: 2vw;
+  color: rgba(238,13,13,0.8);
+  font-weight: bold;
+  margin-right: 10px; /* espace entre texte et image */
+  white-space: nowrap;
+  user-select: none;
+}
+
+#watermarkImage {
+  height: 2vw; /* même taille que le texte pour rester proportionnel */
+  width: auto;
+}
+
+
   /* Frame noire pour boutons vidéo */
   .videoControls {
     position: absolute;
@@ -70,7 +97,11 @@
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
-    <div id="watermark">@roman_manero</div>
+    <div id="watermarkContainer">
+  <span id="watermark">@roman_manero</span>
+  <img id="watermarkImage" src="images/watermark.png" alt="Logo" />
+</div>
+
 
     <!-- Boutons vidéo -->
     <div class="videoControls" id="videoControls" style="display:none;">
