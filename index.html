@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - v7</title>
+<title>Explorateur de fichiers - v8</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -19,18 +19,17 @@
 
   #viewerOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.4s ease; }
   #viewerOverlay.show { display: flex; opacity: 1; }
-  #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius: 10px; transform: scale(0.8); transition: transform 0.4s ease; }
+  #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius: 10px; transform: scale(0.8); transition: transform 0.4s ease; display: inline-block; }
   #viewerOverlay.show #viewerBox { transform: scale(1); }
   #viewerClose { position: absolute; top: -40px; right: 0; font-size: 28px; cursor: pointer; font-weight: bold; color: #fff; z-index: 10; }
   #viewerImage, #viewerVideo { display: block; max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 6px 15px rgba(0,0,0,0.5); transition: opacity 0.4s ease; opacity: 0; }
   #viewerImage.show, #viewerVideo.show { opacity: 1; }
   #imageBlocker { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
-  /* boutons vidéo */
-  .videoButton { position: absolute; bottom: 10px; width: 40px; height: 40px; cursor: pointer; z-index: 15; }
-  #btnMinus5 { left: calc(50% - 70px); }
-  #btnPlayPause { left: 50%; transform: translateX(-50%); }
-  #btnPlus15 { left: calc(50% + 70px); }
+  /* boutons vidéo sous la vidéo */
+  .videoControls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; align-items: center; z-index: 15; }
+  .videoButton { width: 50px; height: 50px; cursor: pointer; }
+  #btnMute { margin-top: 5px; display: block; width: 50px; height: 50px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -43,9 +42,12 @@
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
-    <img id="btnMinus5" class="videoButton" src="par/moins5.png">
-    <img id="btnPlayPause" class="videoButton" src="par/2.png">
-    <img id="btnPlus15" class="videoButton" src="par/plus15.png">
+    <div class="videoControls" id="videoControls" style="display:none;">
+      <img id="btnMinus5" class="videoButton" src="par/moins5.png">
+      <img id="btnPlayPause" class="videoButton" src="par/2.png">
+      <img id="btnPlus15" class="videoButton" src="par/plus15.png">
+    </div>
+    <img id="btnMute" src="par/on.png" style="display:none;">
   </div>
 </div>
 
@@ -59,38 +61,35 @@ function createTree(container, obj) {
   for (let key in obj) {
     const item = document.createElement('div');
     if(typeof obj[key] === 'object' && obj[key].path===undefined){
-      item.textContent = key; item.className='folder';
-      const nested = document.createElement('div'); nested.className='nested';
+      item.textContent=key; item.className='folder';
+      const nested=document.createElement('div'); nested.className='nested';
       createTree(nested,obj[key]);
-      item.onclick = ()=>nested.classList.toggle('show');
+      item.onclick=()=>nested.classList.toggle('show');
       container.appendChild(item); container.appendChild(nested);
     } else {
-      const file=obj[key];
-      item.textContent=key; item.className='file';
-      if(file.pin) item.classList.add('locked');
-      item.onclick = ()=>{
-        if(file.pin){ const userPin=prompt("Entrez le PIN pour débloquer ce fichier :"); if(userPin!==file.pin){alert("PIN incorrect !"); return;} }
-        openViewer(file.path);
-      };
+      const file=obj[key]; item.textContent=key; item.className='file';
+      if(file.pin)item.classList.add('locked');
+      item.onclick=()=>{ if(file.pin){ const p=prompt("Entrez le PIN :"); if(p!==file.pin){alert("PIN incorrect !"); return;} } openViewer(file.path); };
       container.appendChild(item);
     }
   }
 }
 
 function openViewer(path){
-  const overlay = document.getElementById("viewerOverlay");
-  const img = document.getElementById("viewerImage");
-  const blocker = document.getElementById("imageBlocker");
-  const btnMinus5 = document.getElementById("btnMinus5");
-  const btnPlayPause = document.getElementById("btnPlayPause");
-  const btnPlus15 = document.getElementById("btnPlus15");
+  const overlay=document.getElementById("viewerOverlay");
+  const img=document.getElementById("viewerImage");
+  const blocker=document.getElementById("imageBlocker");
+  const controls=document.getElementById("videoControls");
+  const btnMinus5=document.getElementById("btnMinus5");
+  const btnPlayPause=document.getElementById("btnPlayPause");
+  const btnPlus15=document.getElementById("btnPlus15");
+  const btnMute=document.getElementById("btnMute");
 
-  const oldVideo = document.getElementById("viewerVideo");
+  const oldVideo=document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
-  btnMinus5.style.display=btnPlayPause.style.display=btnPlus15.style.display="none";
-  btnMinus5.onclick=btnPlayPause.onclick=btnPlus15.onclick=null;
+  controls.style.display=btnMute.style.display="none";
 
-  const ext = path.split('.').pop().toLowerCase();
+  const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
 
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
@@ -105,14 +104,15 @@ function openViewer(path){
 
     video.onloadedmetadata=()=>{
       blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
-      btnMinus5.style.display=btnPlayPause.style.display=btnPlus15.style.display="block";
-      btnPlayPause.src="par/2.png"; // play initial
+      controls.style.display=btnMute.style.display="block";
 
-      btnPlayPause.onclick=()=>{
-        if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; } else { video.pause(); btnPlayPause.src="par/1.png"; }
-      };
+      btnPlayPause.src="par/2.png"; // play
+      let muted=false; btnMute.src="par/on.png";
+
+      btnPlayPause.onclick=()=>{ if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; }else{ video.pause(); btnPlayPause.src="par/1.png"; } };
       btnMinus5.onclick=()=>{ video.currentTime=Math.max(0,video.currentTime-5); };
       btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
+      btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
     };
   } else { alert("Format non supporté !"); }
 }
@@ -121,17 +121,12 @@ function closeViewer(){
   const overlay=document.getElementById("viewerOverlay");
   const img=document.getElementById("viewerImage");
   const video=document.getElementById("viewerVideo");
-  const btnMinus5=document.getElementById("btnMinus5");
-  const btnPlayPause=document.getElementById("btnPlayPause");
-  const btnPlus15=document.getElementById("btnPlus15");
+  const controls=document.getElementById("videoControls");
+  const btnMute=document.getElementById("btnMute");
 
-  img.classList.remove("show");
-  if(video) video.classList.remove("show");
-  overlay.classList.remove("show");
-
-  btnMinus5.style.display=btnPlayPause.style.display=btnPlus15.style.display="none";
-  btnMinus5.onclick=btnPlayPause.onclick=btnPlus15.onclick=null;
-
+  img.classList.remove("show"); if(video) video.classList.remove("show");
+  overlay.classList.remove("show"); controls.style.display=btnMute.style.display="none";
+  controls.querySelectorAll('img').forEach(b=>b.onclick=null); btnMute.onclick=null;
   setTimeout(()=>{ img.src=""; if(video) video.remove(); },400);
 }
 
