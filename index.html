@@ -26,6 +26,23 @@
   #viewerImage.show, #viewerVideo.show { opacity: 1; }
   #imageBlocker { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
 
+  /* Watermark @roman_manero */
+/* Watermark @roman_manero */
+#watermark {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20vw; /* taille relative à la largeur de l'écran */
+  color: rgba(200, 200, 200, 0.2); /* gris pâle, 20% opacity */
+  pointer-events: none; /* ne bloque pas les clics */
+  z-index: 0; /* derrière tout le contenu */
+  white-space: nowrap; 
+  user-select: none;
+  text-align: center;
+}
+
+
   /* Frame noire pour boutons vidéo */
   .videoControls {
     position: absolute;
@@ -55,6 +72,8 @@
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
 
+<div id="watermark">@roman_manero</div>
+    
     <!-- Boutons vidéo -->
     <div class="videoControls" id="videoControls" style="display:none;">
       <img id="btnMinus5" class="videoButton" src="par/moins5.png">
