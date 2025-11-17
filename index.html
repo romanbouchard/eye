@@ -4,11 +4,62 @@
 <meta charset="UTF-8">
 <title>Explorateur de fichiers</title>
 <style>
-  body { font-family: Arial; background: #f5f5f5; padding: 20px; }
-  .folder, .file { margin: 5px 0; cursor: pointer; }
-  .folder { font-weight: bold; color: #2c3e50; }
-  .file { color: #2980b9; }
-  .nested { margin-left: 20px; display: none; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #e0e7ff;
+    padding: 20px;
+  }
+
+  h2 {
+    color: #1e3a8a;
+    text-shadow: 1px 1px 2px #aaa;
+  }
+
+  #fileTree {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 15px;
+    max-width: 400px;
+  }
+
+  .folder, .file {
+    margin: 5px 0;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background 0.2s;
+  }
+
+  .folder {
+    font-weight: bold;
+    color: #1e40af;
+  }
+
+  .file {
+    color: #2563eb;
+  }
+
+  .folder:hover, .file:hover {
+    background: #dbeafe;
+  }
+
+  .nested {
+    margin-left: 20px;
+    display: none;
+  }
+
+  .folder::before {
+    content: "📁 ";
+  }
+
+  .file::before {
+    content: "📄 ";
+  }
+
+  .locked::before {
+    content: "🔒 ";
+  }
 </style>
 </head>
 <body>
@@ -27,6 +78,7 @@ const files = {
 function createTree(container, obj) {
   for (let key in obj) {
     const item = document.createElement('div');
+
     if (typeof obj[key] === 'object' && obj[key].path === undefined) {
       // C'est un dossier
       item.textContent = key;
@@ -39,10 +91,11 @@ function createTree(container, obj) {
       container.appendChild(nested);
     } else {
       // C'est un fichier
+      const file = obj[key];
       item.textContent = key;
       item.className = 'file';
+      if (file.pin) item.classList.add('locked'); // Ajoute icône lock pour fichiers protégés
       item.onclick = () => {
-        const file = obj[key];
         if (file.pin) {
           const userPin = prompt("Entrez le PIN pour débloquer ce fichier :");
           if (userPin === file.pin) {
