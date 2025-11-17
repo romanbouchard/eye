@@ -39,6 +39,7 @@
     background: rgba(0,0,0,0.7);
     padding: 10px 20px;
     border-radius: 10px;
+      opacity: 1
   }
   .videoButton { width: 60px; height: 60px; cursor: pointer; }
 </style>
@@ -142,6 +143,24 @@ function closeViewer(){
 }
 
 createTree(document.getElementById('fileTree'), files);
+
+  let fadeTimeout;
+
+function showControls() {
+  const controls = document.getElementById("videoControls");
+  controls.style.transition = "opacity 0.5s ease";
+  controls.style.opacity = 1;
+
+  clearTimeout(fadeTimeout);
+  fadeTimeout = setTimeout(() => {
+    controls.style.opacity = 0;
+  }, 5000); // 5 secondes sans mouvement
+}
+
+// Appliquer sur tout le viewer
+const viewerBox = document.getElementById("viewerBox");
+viewerBox.addEventListener("mousemove", showControls);
+  
 </script>
 
 </body>
