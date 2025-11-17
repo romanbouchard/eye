@@ -5,7 +5,7 @@
 <title>Explorateur de fichiers</title>
 <style>
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background: #e0e7ff;
     padding: 20px;
   }
@@ -18,47 +18,67 @@
   #fileTree {
     background: #fff;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     padding: 15px;
     max-width: 400px;
   }
 
   .folder, .file {
-    margin: 5px 0;
+    margin: 6px 0;
     cursor: pointer;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 5px;
     transition: background 0.2s;
   }
 
-  .folder {
-    font-weight: bold;
-    color: #1e40af;
-  }
+  .folder { font-weight: bold; color: #1e40af; }
+  .file { color: #2563eb; }
 
-  .file {
-    color: #2563eb;
-  }
+  .folder:hover, .file:hover { background: #dbeafe; }
 
-  .folder:hover, .file:hover {
-    background: #dbeafe;
-  }
+  .nested { margin-left: 20px; display: none; }
 
-  .nested {
-    margin-left: 20px;
+  .folder::before { content: "📁 "; }
+  .file::before { content: "📄 "; }
+  .locked::before { content: "🔒 "; }
+
+  /* --- FRAME / OVERLAY --- */
+  #viewerOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
     display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
   }
 
-  .folder::before {
-    content: "📁 ";
+  #viewerBox {
+    background: #fff;
+    width: 80%;
+    height: 80%;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
   }
 
-  .file::before {
-    content: "📄 ";
+  #viewerClose {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    z-index: 10;
   }
 
-  .locked::before {
-    content: "🔒 ";
+  #viewerContent {
+    width: 100%;
+    height: 100%;
+    border: none;
   }
 </style>
 </head>
@@ -66,6 +86,14 @@
 
 <h2>Explorateur de fichiers</h2>
 <div id="fileTree"></div>
+
+<!-- OVERLAY VIEWER -->
+<div id="viewerOverlay" oncontextmenu="return false;">
+  <div id="viewerBox">
+    <div id="viewerClose" onclick="closeViewer()">X</div>
+    <iframe id="viewerContent" sandbox="allow-same-origin"></iframe>
+  </div>
+</div>
 
 <script>
 const files = {
@@ -80,36 +108,51 @@ function createTree(container, obj) {
     const item = document.createElement('div');
 
     if (typeof obj[key] === 'object' && obj[key].path === undefined) {
-      // C'est un dossier
       item.textContent = key;
       item.className = 'folder';
+
       const nested = document.createElement('div');
       nested.className = 'nested';
+
       createTree(nested, obj[key]);
-      item.onclick = () => { nested.style.display = nested.style.display === 'none' ? 'block' : 'none'; };
+
+      item.onclick = () => {
+        nested.style.display = nested.style.display === 'none' ? 'block' : 'none';
+      };
+
       container.appendChild(item);
       container.appendChild(nested);
     } else {
-      // C'est un fichier
       const file = obj[key];
       item.textContent = key;
       item.className = 'file';
-      if (file.pin) item.classList.add('locked'); // Ajoute icône lock pour fichiers protégés
+
+      if (file.pin) item.classList.add('locked');
+
       item.onclick = () => {
         if (file.pin) {
           const userPin = prompt("Entrez le PIN pour débloquer ce fichier :");
-          if (userPin === file.pin) {
-            window.open(file.path, "_blank");
-          } else {
+          if (userPin !== file.pin) {
             alert("PIN incorrect !");
+            return;
           }
-        } else {
-          window.open(file.path, "_blank");
         }
+        openViewer(file.path);
       };
+
       container.appendChild(item);
     }
   }
+}
+
+function openViewer(path) {
+  document.getElementById("viewerContent").src = path;
+  document.getElementById("viewerOverlay").style.display = "flex";
+}
+
+function closeViewer() {
+  document.getElementById("viewerOverlay").style.display = "none";
+  document.getElementById("viewerContent").src = "";
 }
 
 createTree(document.getElementById('fileTree'), files);
