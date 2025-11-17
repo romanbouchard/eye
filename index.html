@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - v5</title>
+<title>Explorateur de fichiers - v6</title>
 <style>
   body {
     font-family: 'Segoe UI', sans-serif;
@@ -113,12 +113,23 @@
     opacity: 1;
   }
 
-  /* overlay transparent au-dessus de l'image/vidéo */
   #imageBlocker {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     z-index: 5;
+  }
+
+  #playPauseButton {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 15;
+    display: none;
   }
 </style>
 </head>
@@ -132,8 +143,8 @@
   <div id="viewerBox">
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
-    <!-- vidéo sera ajoutée dynamiquement -->
     <div id="imageBlocker"></div>
+    <img id="playPauseButton" src="">
   </div>
 </div>
 
@@ -155,36 +166,24 @@ function createTree(container, obj) {
     if (typeof obj[key] === 'object' && obj[key].path === undefined) {
       item.textContent = key;
       item.className = 'folder';
-
       const nested = document.createElement('div');
       nested.className = 'nested';
-
       createTree(nested, obj[key]);
-
-      item.onclick = () => {
-        nested.classList.toggle('show');
-      };
-
+      item.onclick = () => nested.classList.toggle('show');
       container.appendChild(item);
       container.appendChild(nested);
     } else {
       const file = obj[key];
       item.textContent = key;
       item.className = 'file';
-
       if (file.pin) item.classList.add('locked');
-
       item.onclick = () => {
-        if (file.pin) {
+        if(file.pin){
           const userPin = prompt("Entrez le PIN pour débloquer ce fichier :");
-          if (userPin !== file.pin) {
-            alert("PIN incorrect !");
-            return;
-          }
+          if(userPin !== file.pin){ alert("PIN incorrect !"); return; }
         }
         openViewer(file.path);
       };
-
       container.appendChild(item);
     }
   }
@@ -194,10 +193,13 @@ function openViewer(path) {
   const overlay = document.getElementById("viewerOverlay");
   const img = document.getElementById("viewerImage");
   const blocker = document.getElementById("imageBlocker");
+  const playPauseBtn = document.getElementById("playPauseButton");
 
   // Supprime ancienne vidéo si présente
   const oldVideo = document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
+  playPauseBtn.style.display = "none";
+  playPauseBtn.onclick = null;
 
   const ext = path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
@@ -213,22 +215,35 @@ function openViewer(path) {
     };
   } else if(["mp4","webm","ogg"].includes(ext)){
     img.style.display = "none";
+
     const video = document.createElement("video");
     video.id = "viewerVideo";
     video.src = path;
-    video.controls = true;
     video.autoplay = true;
     video.style.maxWidth = "90vw";
     video.style.maxHeight = "90vh";
     video.style.borderRadius = "8px";
     video.style.boxShadow = "0 6px 15px rgba(0,0,0,0.5)";
     video.style.position = "relative";
+    video.classList.add("show");
     document.getElementById("viewerBox").appendChild(video);
 
     video.onloadedmetadata = () => {
       blocker.style.width = video.offsetWidth + "px";
       blocker.style.height = video.offsetHeight + "px";
-      video.classList.add("show");
+
+      playPauseBtn.style.display = "block";
+      playPauseBtn.src = "par/2.png"; // play au départ
+
+      playPauseBtn.onclick = () => {
+        if(video.paused){
+          video.play();
+          playPauseBtn.src = "par/2.png";
+        } else {
+          video.pause();
+          playPauseBtn.src = "par/1.png";
+        }
+      };
     };
   } else {
     alert("Format non supporté !");
@@ -239,13 +254,17 @@ function closeViewer() {
   const overlay = document.getElementById("viewerOverlay");
   const img = document.getElementById("viewerImage");
   const video = document.getElementById("viewerVideo");
+  const playPauseBtn = document.getElementById("playPauseButton");
 
   img.classList.remove("show");
   if(video) video.classList.remove("show");
 
   overlay.classList.remove("show");
 
-  setTimeout(() => { 
+  playPauseBtn.style.display = "none";
+  playPauseBtn.onclick = null;
+
+  setTimeout(() => {
     img.src = "";
     if(video) video.remove();
   }, 400);
