@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - v8</title>
+<title>Explorateur de fichiers - v9</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -29,7 +29,6 @@
   /* boutons vidéo sous la vidéo */
   .videoControls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; align-items: center; z-index: 15; }
   .videoButton { width: 50px; height: 50px; cursor: pointer; }
-  #btnMute { margin-top: 5px; display: block; width: 50px; height: 50px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -42,12 +41,15 @@
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
+
+    <!-- Boutons vidéo -->
     <div class="videoControls" id="videoControls" style="display:none;">
       <img id="btnMinus5" class="videoButton" src="par/moins5.png">
       <img id="btnPlayPause" class="videoButton" src="par/2.png">
       <img id="btnPlus15" class="videoButton" src="par/plus15.png">
+      <img id="btnMute" class="videoButton" src="par/on.png">
     </div>
-    <img id="btnMute" src="par/on.png" style="display:none;">
+
   </div>
 </div>
 
@@ -87,7 +89,7 @@ function openViewer(path){
 
   const oldVideo=document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
-  controls.style.display=btnMute.style.display="none";
+  controls.style.display="none";
 
   const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
@@ -104,10 +106,9 @@ function openViewer(path){
 
     video.onloadedmetadata=()=>{
       blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
-      controls.style.display=btnMute.style.display="block";
+      controls.style.display="flex";
 
-      btnPlayPause.src="par/2.png"; // play
-      let muted=false; btnMute.src="par/on.png";
+      let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
 
       btnPlayPause.onclick=()=>{ if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; }else{ video.pause(); btnPlayPause.src="par/1.png"; } };
       btnMinus5.onclick=()=>{ video.currentTime=Math.max(0,video.currentTime-5); };
@@ -122,11 +123,10 @@ function closeViewer(){
   const img=document.getElementById("viewerImage");
   const video=document.getElementById("viewerVideo");
   const controls=document.getElementById("videoControls");
-  const btnMute=document.getElementById("btnMute");
 
   img.classList.remove("show"); if(video) video.classList.remove("show");
-  overlay.classList.remove("show"); controls.style.display=btnMute.style.display="none";
-  controls.querySelectorAll('img').forEach(b=>b.onclick=null); btnMute.onclick=null;
+  overlay.classList.remove("show"); controls.style.display="none";
+  controls.querySelectorAll('img').forEach(b=>b.onclick=null);
   setTimeout(()=>{ img.src=""; if(video) video.remove(); },400);
 }
 
