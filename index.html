@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - √19</title>
+<title>Explorateur de fichiers - √20</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -47,11 +47,10 @@
   }
 
   #watermarkImage {
-    height: 4vw; /* plus gros que le texte */
+    height: 4vw;
     width: auto;
   }
 
-  /* Frame noire pour boutons vidéo */
   .videoControls {
     position: absolute;
     bottom:10px; left:50%;
@@ -64,13 +63,20 @@
     opacity:1;
     transition: opacity 0.5s ease;
   }
+
   .videoButton { width:60px; height:60px; cursor:pointer; }
 
+  /* Bouton restart au centre */
   #btnRestart {
     display:none;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    z-index:20;
+    cursor:pointer;
   }
 
-  /* Texte copyright */
   #copyrightNotice {
     position: fixed;
     bottom: 10px;
@@ -107,7 +113,6 @@
       <img id="watermarkImage" src="par/watermark.png" alt="Logo" />
     </div>
 
-    <!-- Boutons vidéo -->
     <div class="videoControls" id="videoControls" style="display:none;">
       <img id="btnMinus5" class="videoButton" src="par/moins5.png">
       <img id="btnPlayPause" class="videoButton" src="par/2.png">
@@ -187,7 +192,7 @@ function openViewer(path){
       btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
       btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
 
-      // Bouton restart
+      // Bouton restart central
       video.onended = () => { btnRestart.style.display="block"; };
       btnRestart.onclick = () => { video.currentTime=0; video.play(); btnRestart.style.display="none"; };
     };
@@ -208,7 +213,6 @@ function closeViewer(){
 
 createTree(document.getElementById('fileTree'), files);
 
-// FADE OUT boutons après 5 sec de non mouvement
 let fadeTimeout;
 function showControls(){
   const controls=document.getElementById("videoControls");
