@@ -26,7 +26,6 @@
   #viewerImage.show, #viewerVideo.show { opacity:1; }
   #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
-  /* Watermark container centré */
   #watermarkContainer {
     position: absolute;
     top: 50%;
@@ -38,18 +37,8 @@
     z-index: 12;
     white-space: nowrap;
   }
-
-  #watermark {
-    font-size: 2vw;
-    color: rgba(238,13,13,1); /* 100% opaque */
-    font-weight: bold;         /* texte en gras */
-    margin-right: 1vw;         /* espace entre texte et image */
-  }
-
-  #watermarkImage {
-    height: 4vw;
-    width: auto;
-  }
+  #watermark { font-size: 2vw; color: rgba(238,13,13,1); font-weight: bold; margin-right: 1vw; }
+  #watermarkImage { height: 4vw; width: auto; }
 
   .videoControls {
     position: absolute;
@@ -63,10 +52,8 @@
     opacity:1;
     transition: opacity 0.5s ease;
   }
-
   .videoButton { width:60px; height:60px; cursor:pointer; }
 
-  /* Bouton restart au centre */
   #btnRestart {
     display:none;
     position:absolute;
@@ -75,8 +62,8 @@
     transform:translate(-50%, -50%);
     z-index:20;
     cursor:pointer;
-    width: 500px;   /* ici tu augmentes la largeur */
-  height: 500px;  /* ici tu augmentes la hauteur */
+    width: 500px;
+    height: 500px;
   }
 
   #copyrightNotice {
@@ -94,7 +81,6 @@
     font-family: 'Segoe UI', sans-serif;
     pointer-events: none;
   }
-
 </style>
 </head>
 <body>
@@ -105,7 +91,6 @@
 <div id="viewerOverlay">
   <div id="viewerBox">
     <img id="btnRestart" class="videoButton" src="par/res.png" />
-
     <div id="viewerClose" onclick="closeViewer()">X</div>
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
@@ -133,13 +118,16 @@ const files = {
     "momo86.jpg": { path: "images/momo86.jpg", pin: null },
     "pin_6969.webp": { path: "images/pin_6969.webp", pin: "6969" }
   },
-
   videos: {
     "franco1short_9x16.mp4": { path: "videos/franco1short_9x16.mp4", pin: "cacahuète43" },
     "suce1.mp4": { path: "videos/suce1.mp4", pin: null },
     "suce2.mp4": { path: "videos/suce2.mp4", pin: null },
     "suce3.mp4": { path: "videos/suce3.mp4", pin: null },
     "11mamoutlaineuxdanmontroupersonel.mp4": { path: "videos/11mamoutlaineuxdanmontroupersonel.mp4", pin: "pepperoni" }
+  },
+  audio: {
+    "musique1.mp3": { path: "audio/musique1.mp3", pin: null },
+    "theme_secret.mp3": { path: "audio/theme_secret.mp3", pin: "1234" }
   }
 };
 
@@ -176,13 +164,18 @@ function openViewer(path){
   const btnRestart=document.getElementById("btnRestart");
   const watermarkContainer=document.getElementById("watermarkContainer");
 
+  // Supprimer ancien media
   const oldVideo=document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
+  const oldAudio=document.getElementById("viewerAudio");
+  if(oldAudio) oldAudio.remove();
+
   controls.style.display="none";
   btnRestart.style.display="none";
 
   const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
+
   watermarkContainer.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "flex":"none";
 
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
@@ -207,10 +200,23 @@ function openViewer(path){
       btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
       btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
 
-      // Bouton restart central
       video.onended = () => { btnRestart.style.display="block"; };
       btnRestart.onclick = () => { video.currentTime=0; video.play(); btnRestart.style.display="none"; };
     };
+  } else if(["mp3","wav"].includes(ext)){
+    img.style.display="none";
+    const audio=document.createElement("audio");
+    audio.id="viewerAudio";
+    audio.src=path;
+    audio.controls=true;
+    audio.autoplay=true;
+    audio.style.width="80vw";
+    audio.style.borderRadius="8px";
+    document.getElementById("viewerBox").appendChild(audio);
+
+    // Pas de watermark sur audio
+    watermarkContainer.style.display="none";
+    controls.style.display="none";
   } else { alert("Format non supporté !"); }
 }
 
@@ -218,12 +224,16 @@ function closeViewer(){
   const overlay=document.getElementById("viewerOverlay");
   const img=document.getElementById("viewerImage");
   const video=document.getElementById("viewerVideo");
+  const audio=document.getElementById("viewerAudio");
   const controls=document.getElementById("videoControls");
   const btnRestart=document.getElementById("btnRestart");
-  img.classList.remove("show"); if(video) video.classList.remove("show");
-  overlay.classList.remove("show"); controls.style.display="none"; btnRestart.style.display="none";
+
+  img.classList.remove("show");
+  if(video) video.classList.remove("show");
+  overlay.classList.remove("show");
+  controls.style.display="none"; btnRestart.style.display="none";
   controls.querySelectorAll('img').forEach(b=>b.onclick=null);
-  setTimeout(()=>{ img.src=""; if(video) video.remove(); },400);
+  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); },400);
 }
 
 createTree(document.getElementById('fileTree'), files);
