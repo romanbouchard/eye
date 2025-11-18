@@ -46,6 +46,23 @@
     margin-right: 1vw;         /* espace entre texte et image */
   }
 
+    #copyrightNotice {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 1vw;
+  padding: 8px 16px;
+  border-radius: 8px;
+  z-index: 20;
+  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+  pointer-events: none; /* pour pas que ça gêne les clics */
+}
+
+
   #watermarkImage {
     height: 4vw; /* plus gros que le texte */
     width: auto;
