@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - √20,2</title>
+<title>Explorateur de fichiers - √20,1</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -24,26 +24,63 @@
   #viewerClose { position: absolute; top:-40px; right:0; font-size:28px; cursor:pointer; font-weight:bold; color:#fff; z-index:10; }
   #viewerImage, #viewerVideo { display:block; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 6px 15px rgba(0,0,0,0.5); transition: opacity 0.4s ease; opacity:0; }
   #viewerImage.show, #viewerVideo.show { opacity:1; }
-
   #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
-  #watermarkContainer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; pointer-events: none; z-index: 12; white-space: nowrap; }
+  #watermarkContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    z-index: 12;
+    white-space: nowrap;
+  }
   #watermark { font-size: 2vw; color: rgba(238,13,13,1); font-weight: bold; margin-right: 1vw; }
   #watermarkImage { height: 4vw; width: auto; }
 
-  .videoControls { position: absolute; bottom:10px; left:50%; transform: translateX(-50%); display:flex; gap:15px; align-items:center; z-index:15; background: rgba(0,0,0,0.7); padding:10px 20px; border-radius:10px; opacity:1; transition: opacity 0.5s ease; }
+  .videoControls {
+    position: absolute;
+    bottom:10px; left:50%;
+    transform: translateX(-50%);
+    display:flex; gap:15px; align-items:center;
+    z-index:15;
+    background: rgba(0,0,0,0.7);
+    padding:10px 20px;
+    border-radius:10px;
+    opacity:1;
+    transition: opacity 0.5s ease;
+  }
   .videoButton { width:60px; height:60px; cursor:pointer; }
 
-  #btnRestart { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:20; cursor:pointer; width: 500px; height: 500px; }
+  #btnRestart {
+    display:none;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    z-index:20;
+    cursor:pointer;
+    width: 500px;
+    height: 500px;
+  }
 
-  #copyrightNotice { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.7vw; padding: 8px 16px; border-radius: 8px; z-index: 20; text-align: center; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
-
-  /* PDF Canvas */
-  #pdfCanvas { display:none; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 6px 15px rgba(0,0,0,0.5); }
-
-  #pdfControls { display:none; position:absolute; bottom:15px; left:50%; transform:translateX(-50%); display:flex; gap:20px; z-index:20; align-items:center; }
-  #pdfControls img { width:70px; height:70px; cursor:pointer; }
-  #pdfPageInfo { color:white; font-size:22px; font-weight:bold; }
+  #copyrightNotice {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 0.7vw;
+    padding: 8px 16px;
+    border-radius: 8px;
+    z-index: 20;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
@@ -55,16 +92,7 @@
   <div id="viewerBox">
     <img id="btnRestart" class="videoButton" src="par/res.png" />
     <div id="viewerClose" onclick="closeViewer()">X</div>
-
     <img id="viewerImage" src="">
-    <canvas id="pdfCanvas"></canvas>
-
-    <div id="pdfControls">
-      <img id="pdfPrev" src="par/back.png">
-      <span id="pdfPageInfo"></span>
-      <img id="pdfNext" src="par/next.png">
-    </div>
-
     <div id="imageBlocker"></div>
 
     <div id="watermarkContainer">
@@ -81,7 +109,6 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
 <script>
 const files = {
   images: {
@@ -97,14 +124,13 @@ const files = {
     "suce1.mp4": { path: "videos/suck1.mp4", pin: null },
     "suce2.mp4": { path: "videos/suck2.mp4", pin: null },
     "suce3.mp4": { path: "videos/suck3.mp4", pin: null },
-    "gif.mp4": { path: "videos/gif.mp4", pin: null }
+    "هل هم طبيعيون - جوني سينس (3) (1).mp4": { path: "videos/هل هم طبيعيون - جوني سينس (3) (1).mp4", pin: null },
+    "gif.mp4": { path: "videos/gif.mp4", pin: null },
+    "11mamoutlaineuxdanmontroupersonel.mp4": { path: "videos/11mamoutlaineuxdanmontroupersonel.mp4", pin: "pepperoni" }
   },
   audio: {
     "kokolakochi.mp3": { path: "audios/kokolakochi.mp3", pin: null },
     "ofenta.mp3": { path: "audios/ofenta.mp3", pin: "fein" }
-  },
-  pdf: {
-    "test.pdf": { path: "pdfs/test.pdf", pin: null }
   }
 };
 
@@ -129,81 +155,106 @@ function createTree(container,obj){
   }
 }
 
-let pdfDoc=null, pdfPage=1, pdfTotal=0;
-
-function renderPDF(){
-  pdfDoc.getPage(pdfPage).then(page=>{
-    const canvas=document.getElementById("pdfCanvas");
-    const ctx=canvas.getContext("2d");
-    const viewport=page.getViewport({ scale:1.5 });
-
-    canvas.height=viewport.height;
-    canvas.width=viewport.width;
-
-    const renderContext={ canvasContext:ctx, viewport:viewport };
-    page.render(renderContext);
-
-    document.getElementById("pdfPageInfo").textContent = pdfPage+" / "+pdfTotal;
-  });
-}
-
-function openPDF(path){
-  const canvas=document.getElementById("pdfCanvas");
-  const controls=document.getElementById("pdfControls");
-  canvas.style.display="block";
-  controls.style.display="flex";
-
-  pdfjsLib.getDocument(path).promise.then(doc=>{
-    pdfDoc=doc;
-    pdfTotal=doc.numPages;
-    pdfPage=1;
-    renderPDF();
-  });
-
-  document.getElementById("pdfPrev").onclick=()=>{
-    if(pdfPage>1){ pdfPage--; renderPDF(); }
-  };
-
-  document.getElementById("pdfNext").onclick=()=>{
-    if(pdfPage<pdfTotal){ pdfPage++; renderPDF(); }
-  };
-}
-
 function openViewer(path){
   const overlay=document.getElementById("viewerOverlay");
   const img=document.getElementById("viewerImage");
-  const canvas=document.getElementById("pdfCanvas");
-  const pdfControls=document.getElementById("pdfControls");
+  const blocker=document.getElementById("imageBlocker");
+  const controls=document.getElementById("videoControls");
+  const btnMinus5=document.getElementById("btnMinus5");
+  const btnPlayPause=document.getElementById("btnPlayPause");
+  const btnPlus15=document.getElementById("btnPlus15");
+  const btnMute=document.getElementById("btnMute");
+  const btnRestart=document.getElementById("btnRestart");
+  const watermarkContainer=document.getElementById("watermarkContainer");
 
-  // reset
-  img.style.display="none";
-  canvas.style.display="none";
-  pdfControls.style.display="none";
+  // Supprimer ancien media
+  const oldVideo=document.getElementById("viewerVideo");
+  if(oldVideo) oldVideo.remove();
+  const oldAudio=document.getElementById("viewerAudio");
+  if(oldAudio) oldAudio.remove();
+
+  controls.style.display="none";
+  btnRestart.style.display="none";
 
   const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
 
+  watermarkContainer.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "flex":"none";
+
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
-    img.style.display="block"; img.src=path;
-    img.onload=()=> img.classList.add("show");
-  }
-  else if(ext === "pdf"){
-    openPDF(path);
-  }
-  else{
-    alert("Format non supporté");
-  }
+    img.style.display="block"; img.classList.remove("show"); img.src=path;
+    img.onload=()=>{ blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show"); };
+  } else if(["mp4","webm","ogg"].includes(ext)){
+    img.style.display="none";
+    const video=document.createElement("video");
+    video.id="viewerVideo"; video.src=path; video.autoplay=true;
+    video.style.maxWidth="90vw"; video.style.maxHeight="90vh"; video.style.borderRadius="8px";
+    video.style.boxShadow="0 6px 15px rgba(0,0,0,0.5)"; video.style.position="relative"; video.classList.add("show");
+    document.getElementById("viewerBox").appendChild(video);
+
+    video.onloadedmetadata=()=>{
+      blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
+      controls.style.display="flex";
+
+      let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
+
+      btnPlayPause.onclick=()=>{ if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; }else{ video.pause(); btnPlayPause.src="par/1.png"; } };
+      btnMinus5.onclick=()=>{ video.currentTime=Math.max(0,video.currentTime-5); };
+      btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
+      btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
+
+      video.onended = () => { btnRestart.style.display="block"; };
+      btnRestart.onclick = () => { video.currentTime=0; video.play(); btnRestart.style.display="none"; };
+    };
+  } else if(["mp3","wav"].includes(ext)){
+    img.style.display="none";
+    const audio=document.createElement("audio");
+    audio.id="viewerAudio";
+    audio.src=path;
+    audio.controls=true;
+    audio.autoplay=true;
+    audio.style.width="80vw";
+    audio.style.borderRadius="8px";
+    document.getElementById("viewerBox").appendChild(audio);
+
+    // Pas de watermark sur audio
+    watermarkContainer.style.display="none";
+    controls.style.display="none";
+  } else { alert("Format non supporté !"); }
 }
 
 function closeViewer(){
-  document.getElementById("viewerOverlay").classList.remove("show");
+  const overlay=document.getElementById("viewerOverlay");
+  const img=document.getElementById("viewerImage");
+  const video=document.getElementById("viewerVideo");
+  const audio=document.getElementById("viewerAudio");
+  const controls=document.getElementById("videoControls");
+  const btnRestart=document.getElementById("btnRestart");
+
+  img.classList.remove("show");
+  if(video) video.classList.remove("show");
+  overlay.classList.remove("show");
+  controls.style.display="none"; btnRestart.style.display="none";
+  controls.querySelectorAll('img').forEach(b=>b.onclick=null);
+  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); },400);
 }
 
 createTree(document.getElementById('fileTree'), files);
+
+let fadeTimeout;
+function showControls(){
+  const controls=document.getElementById("videoControls");
+  controls.style.opacity=1;
+  clearTimeout(fadeTimeout);
+  fadeTimeout=setTimeout(()=>{ controls.style.opacity=0; },5000);
+}
+document.getElementById("viewerBox").addEventListener("mousemove", showControls);
 </script>
 
-<div id="copyrightNotice">⚠️ Tous les contenus diffusés sur ce site ont été créés par moi ou trouvés sur Google.<br>
-Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation, veuillez me contacter immédiatement.</div>
+<div id="copyrightNotice">⚠️ Tous les contenus diffusés sur ce site ont été créés par moi ou trouvés sur Google. 
+Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation, 
+veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong> pour demander son retrait. 
+Votre requête sera traitée rapidement afin de respecter vos droits.</div>
 
 </body>
 </html>
