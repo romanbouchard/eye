@@ -131,6 +131,9 @@ const files = {
   audio: {
     "kokolakochi.mp3": { path: "audios/kokolakochi.mp3", pin: null },
     "ofenta.mp3": { path: "audios/ofenta.mp3", pin: "fein" }
+  },
+  pdf: {
+    "Dr Holly Beats, farah pahlavi, ali rza pahlavi, mohammed rza pahlavi et De A à Zepbound (1).pdf": { path: "pdf/Dr Holly Beats, farah pahlavi, ali rza pahlavi, mohammed rza pahlavi et De A à Zepbound (1).pdf", pin: null }
   }
 };
 
@@ -172,6 +175,8 @@ function openViewer(path){
   if(oldVideo) oldVideo.remove();
   const oldAudio=document.getElementById("viewerAudio");
   if(oldAudio) oldAudio.remove();
+  const oldPDF=document.getElementById("viewerPDF");
+  if(oldPDF) oldPDF.remove();
 
   controls.style.display="none";
   btnRestart.style.display="none";
@@ -217,9 +222,24 @@ function openViewer(path){
     audio.style.borderRadius="8px";
     document.getElementById("viewerBox").appendChild(audio);
 
-    // Pas de watermark sur audio
     watermarkContainer.style.display="none";
     controls.style.display="none";
+  } else if(ext === "pdf"){
+    img.style.display="none";
+
+    const pdfEmbed = document.createElement("iframe");
+    pdfEmbed.id = "viewerPDF";
+    pdfEmbed.src = path;
+    pdfEmbed.style.width = "90vw";
+    pdfEmbed.style.height = "90vh";
+    pdfEmbed.style.border = "none";
+    pdfEmbed.style.borderRadius = "8px";
+    pdfEmbed.classList.add("show");
+
+    document.getElementById("viewerBox").appendChild(pdfEmbed);
+
+    watermarkContainer.style.display = "none";
+    controls.style.display = "none";
   } else { alert("Format non supporté !"); }
 }
 
@@ -228,6 +248,7 @@ function closeViewer(){
   const img=document.getElementById("viewerImage");
   const video=document.getElementById("viewerVideo");
   const audio=document.getElementById("viewerAudio");
+  const pdf=document.getElementById("viewerPDF");
   const controls=document.getElementById("videoControls");
   const btnRestart=document.getElementById("btnRestart");
 
@@ -236,7 +257,7 @@ function closeViewer(){
   overlay.classList.remove("show");
   controls.style.display="none"; btnRestart.style.display="none";
   controls.querySelectorAll('img').forEach(b=>b.onclick=null);
-  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); },400);
+  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); if(pdf) pdf.remove(); },400);
 }
 
 createTree(document.getElementById('fileTree'), files);
