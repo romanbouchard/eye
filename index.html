@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - √20,4</title>
+<title>Explorateur de fichiers - √20,1</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -81,12 +81,7 @@
     font-family: 'Segoe UI', sans-serif;
     pointer-events: none;
   }
-
-  #pdfCanvas { display:none; border-radius:8px; box-shadow:0 6px 15px rgba(0,0,0,0.5); max-width:90vw; max-height:90vh; }
-  #pdfControls { display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); gap:15px; z-index:20; }
-  #pdfControls img { width:60px; height:60px; cursor:pointer; }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.14.305/pdf.min.js"></script>
 </head>
 <body>
 
@@ -104,11 +99,7 @@
       <span id="watermark">@roman_manero</span>
       <img id="watermarkImage" src="par/watermark.png" alt="Logo" />
     </div>
-    <canvas id="pdfCanvas"></canvas>
-    <div id="pdfControls">
-      <img id="btnPDFPrev" src="par/back.png">
-      <img id="btnPDFNext" src="par/next.png">
-    </div>
+
     <div class="videoControls" id="videoControls" style="display:none;">
       <img id="btnMinus5" class="videoButton" src="par/moins5.png">
       <img id="btnPlayPause" class="videoButton" src="par/2.png">
@@ -140,9 +131,6 @@ const files = {
   audio: {
     "kokolakochi.mp3": { path: "audios/kokolakochi.mp3", pin: null },
     "ofenta.mp3": { path: "audios/ofenta.mp3", pin: "fein" }
-  },
-  pdf: {
-    "Dr Holly Beats, farah pahlavi, ali rza pahlavi, mohammed rza pahlavi et De A à Zepbound (1).pdf": { path: "pdf/Dr Holly Beats, farah pahlavi, ali rza pahlavi, mohammed rza pahlavi et De A à Zepbound (1).pdf", pin: null }
   }
 };
 
@@ -184,8 +172,6 @@ function openViewer(path){
   if(oldVideo) oldVideo.remove();
   const oldAudio=document.getElementById("viewerAudio");
   if(oldAudio) oldAudio.remove();
-  const oldPDF=document.getElementById("viewerPDF");
-  if(oldPDF) oldPDF.remove();
 
   controls.style.display="none";
   btnRestart.style.display="none";
@@ -231,46 +217,9 @@ function openViewer(path){
     audio.style.borderRadius="8px";
     document.getElementById("viewerBox").appendChild(audio);
 
+    // Pas de watermark sur audio
     watermarkContainer.style.display="none";
     controls.style.display="none";
-  } else if(ext === "pdf"){
-    img.style.display="none";
-    controls.style.display="none";
-    watermarkContainer.style.display="none";
-
-    const pdfCanvas = document.getElementById("pdfCanvas");
-    const pdfControls = document.getElementById("pdfControls");
-    pdfCanvas.style.display = "block";
-    pdfControls.style.display = "flex";
-
-    let pdfDoc = null, pageNum = 1;
-
-    pdfjsLib.getDocument(path).promise.then(doc => {
-        pdfDoc = doc;
-        renderPage(pageNum);
-    });
-
-    function renderPage(num){
-        pdfDoc.getPage(num).then(page => {
-            const viewport = page.getViewport({ scale: 1.5 });
-            const context = pdfCanvas.getContext('2d');
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-            const renderCtx = { canvasContext: context, viewport: viewport };
-            page.render(renderCtx);
-        });
-    }
-
-    document.getElementById("btnPDFPrev").onclick = () => {
-        if(pageNum <= 1) return;
-        pageNum--;
-        renderPage(pageNum);
-    };
-    document.getElementById("btnPDFNext").onclick = () => {
-        if(pageNum >= pdfDoc.numPages) return;
-        pageNum++;
-        renderPage(pageNum);
-    };
   } else { alert("Format non supporté !"); }
 }
 
@@ -279,7 +228,6 @@ function closeViewer(){
   const img=document.getElementById("viewerImage");
   const video=document.getElementById("viewerVideo");
   const audio=document.getElementById("viewerAudio");
-  const pdf=document.getElementById("viewerPDF");
   const controls=document.getElementById("videoControls");
   const btnRestart=document.getElementById("btnRestart");
 
@@ -288,7 +236,7 @@ function closeViewer(){
   overlay.classList.remove("show");
   controls.style.display="none"; btnRestart.style.display="none";
   controls.querySelectorAll('img').forEach(b=>b.onclick=null);
-  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); if(pdf) pdf.remove(); },400);
+  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); },400);
 }
 
 createTree(document.getElementById('fileTree'), files);
@@ -307,49 +255,6 @@ document.getElementById("viewerBox").addEventListener("mousemove", showControls)
 Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation, 
 veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong> pour demander son retrait. 
 Votre requête sera traitée rapidement afin de respecter vos droits.</div>
-<!-- juste avant </body>, après ton script existant -->
-<script>
-// --- Tooltip pour les infos des fichiers ---
-const tooltip = document.createElement('div');
-tooltip.style.position = 'absolute';
-tooltip.style.background = '#fff';
-tooltip.style.border = '1px solid #888';
-tooltip.style.padding = '8px';
-tooltip.style.borderRadius = '5px';
-tooltip.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-tooltip.style.pointerEvents = 'none';
-tooltip.style.display = 'none';
-tooltip.style.zIndex = 50;
-document.body.appendChild(tooltip);
-
-// Infos à afficher (tu remplis les autres fichiers de la même manière)
-const fileInfos = {
-  "eau_de_toilette00.png": { nom: "Eau de Toilette 00", dimension: "1024x768", taille: "2.3 Mo", createur: "Roman", date: "2025-05-01" },
-  "troupeau_d'ornythorinque_toxique.jpg": { nom: "Troupeau d'Ornythorinque Toxique", dimension: "1920x1080", taille: "4.1 Mo", createur: "Roman", date: "2025-04-15" },
-  "eurk.jpg": { nom: "Eurk", dimension: "800x600", taille: "1.2 Mo", createur: "Roman", date: "2025-03-20" },
-  // complète ici pour les autres fichiers
-};
-
-// Ajoute l'événement sur chaque fichier pour afficher le tooltip
-document.querySelectorAll('.file').forEach(el=>{
-  el.addEventListener('mousemove', e=>{
-    const info = fileInfos[el.textContent];
-    if(info){
-      tooltip.innerHTML = `
-        <strong>Nom complet:</strong> ${info.nom}<br>
-        <strong>Dimension:</strong> ${info.dimension}<br>
-        <strong>Taille:</strong> ${info.taille}<br>
-        <strong>Créateur:</strong> ${info.createur}<br>
-        <strong>Date:</strong> ${info.date}
-      `;
-      tooltip.style.left = (e.pageX + 15) + 'px';
-      tooltip.style.top = (e.pageY + 15) + 'px';
-      tooltip.style.display = 'block';
-    }
-  });
-  el.addEventListener('mouseleave', ()=>{ tooltip.style.display = 'none'; });
-});
-</script>
 
 </body>
 </html>
