@@ -199,7 +199,8 @@ function openViewer(path){
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
     img.style.display="block"; img.classList.remove("show"); img.src=path;
     img.onload=()=>{ blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show"); };
-  } else if(["mp4","webm","ogg"].includes(ext)){
+  }
+  else if(["mp4","webm","ogg"].includes(ext)){
     img.style.display="none";
     const video=document.createElement("video");
     video.id="viewerVideo"; video.src=path; video.autoplay=true;
@@ -210,70 +211,43 @@ function openViewer(path){
     video.onloadedmetadata=()=>{
       blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
       controls.style.display="flex";
-
       let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
-
       btnPlayPause.onclick=()=>{ if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; }else{ video.pause(); btnPlayPause.src="par/1.png"; } };
       btnMinus5.onclick=()=>{ video.currentTime=Math.max(0,video.currentTime-5); };
       btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
       btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
-
       video.onended = () => { btnRestart.style.display="block"; };
       btnRestart.onclick = () => { video.currentTime=0; video.play(); btnRestart.style.display="none"; };
     };
-  } else if(["mp3","wav"].includes(ext)){
+  }
+  else if(["mp3","wav"].includes(ext)){
     img.style.display="none";
     const audio=document.createElement("audio");
-    audio.id="viewerAudio";
-    audio.src=path;
-    audio.controls=true;
-    audio.autoplay=true;
-    audio.style.width="80vw";
-    audio.style.borderRadius="8px";
+    audio.id="viewerAudio"; audio.src=path; audio.controls=true; audio.autoplay=true;
+    audio.style.width="80vw"; audio.style.borderRadius="8px";
     document.getElementById("viewerBox").appendChild(audio);
-
     watermarkContainer.style.display="none";
     controls.style.display="none";
-} else if(ext === "pdf"){
-    img.style.display="none";
-    controls.style.display="none";
-    watermarkContainer.style.display="none";
-
-    const pdfCanvas = document.getElementById("pdfCanvas");
-    const pdfControls = document.getElementById("pdfControls");
-    pdfCanvas.style.display = "block";
-    pdfControls.style.display = "flex";
-
-    let pdfDoc = null, pageNum = 1;
-
-    pdfjsLib.getDocument(path).promise.then(doc => {
-        pdfDoc = doc;
-        renderPage(pageNum);
-    });
-
+  }
+  else if(ext === "pdf"){
+    img.style.display="none"; controls.style.display="none"; watermarkContainer.style.display="none";
+    const pdfCanvas=document.getElementById("pdfCanvas");
+    const pdfControls=document.getElementById("pdfControls");
+    pdfCanvas.style.display="block"; pdfControls.style.display="flex";
+    let pdfDoc=null, pageNum=1;
+    pdfjsLib.getDocument(path).promise.then(doc=>{ pdfDoc=doc; renderPage(pageNum); }).catch(()=>{ alert("Impossible de charger le PDF !"); });
     function renderPage(num){
-        pdfDoc.getPage(num).then(page => {
-            const viewport = page.getViewport({ scale: 1.5 });
-            const context = pdfCanvas.getContext('2d');
-            pdfCanvas.height = viewport.height;
-            pdfCanvas.width = viewport.width;
-            const renderCtx = { canvasContext: context, viewport: viewport };
-            page.render(renderCtx);
-        });
+      pdfDoc.getPage(num).then(page=>{
+        const viewport=page.getViewport({ scale:1.5 });
+        const context=pdfCanvas.getContext('2d');
+        pdfCanvas.height=viewport.height; pdfCanvas.width=viewport.width;
+        page.render({canvasContext:context, viewport:viewport});
+      });
     }
-
-    document.getElementById("btnPDFPrev").onclick = () => {
-        if(pageNum <= 1) return;
-        pageNum--;
-        renderPage(pageNum);
-    };
-    document.getElementById("btnPDFNext").onclick = () => {
-        if(pageNum >= pdfDoc.numPages) return;
-        pageNum++;
-        renderPage(pageNum);
-    };
-}
-  } else { alert("Format non supporté !"); }
+    document.getElementById("btnPDFPrev").onclick=()=>{ if(pageNum>1){ pageNum--; renderPage(pageNum); } };
+    document.getElementById("btnPDFNext").onclick=()=>{ if(pageNum<pdfDoc.numPages){ pageNum++; renderPage(pageNum); } };
+  }
+  else { alert("Format non supporté !"); }
 }
 
 function closeViewer(){
