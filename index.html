@@ -307,6 +307,49 @@ document.getElementById("viewerBox").addEventListener("mousemove", showControls)
 Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation, 
 veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong> pour demander son retrait. 
 Votre requête sera traitée rapidement afin de respecter vos droits.</div>
+<!-- juste avant </body>, après ton script existant -->
+<script>
+// --- Tooltip pour les infos des fichiers ---
+const tooltip = document.createElement('div');
+tooltip.style.position = 'absolute';
+tooltip.style.background = '#fff';
+tooltip.style.border = '1px solid #888';
+tooltip.style.padding = '8px';
+tooltip.style.borderRadius = '5px';
+tooltip.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+tooltip.style.pointerEvents = 'none';
+tooltip.style.display = 'none';
+tooltip.style.zIndex = 50;
+document.body.appendChild(tooltip);
+
+// Infos à afficher (tu remplis les autres fichiers de la même manière)
+const fileInfos = {
+  "eau_de_toilette00.png": { nom: "Eau de Toilette 00", dimension: "1024x768", taille: "2.3 Mo", createur: "Roman", date: "2025-05-01" },
+  "troupeau_d'ornythorinque_toxique.jpg": { nom: "Troupeau d'Ornythorinque Toxique", dimension: "1920x1080", taille: "4.1 Mo", createur: "Roman", date: "2025-04-15" },
+  "eurk.jpg": { nom: "Eurk", dimension: "800x600", taille: "1.2 Mo", createur: "Roman", date: "2025-03-20" },
+  // complète ici pour les autres fichiers
+};
+
+// Ajoute l'événement sur chaque fichier pour afficher le tooltip
+document.querySelectorAll('.file').forEach(el=>{
+  el.addEventListener('mousemove', e=>{
+    const info = fileInfos[el.textContent];
+    if(info){
+      tooltip.innerHTML = `
+        <strong>Nom complet:</strong> ${info.nom}<br>
+        <strong>Dimension:</strong> ${info.dimension}<br>
+        <strong>Taille:</strong> ${info.taille}<br>
+        <strong>Créateur:</strong> ${info.createur}<br>
+        <strong>Date:</strong> ${info.date}
+      `;
+      tooltip.style.left = (e.pageX + 15) + 'px';
+      tooltip.style.top = (e.pageY + 15) + 'px';
+      tooltip.style.display = 'block';
+    }
+  });
+  el.addEventListener('mouseleave', ()=>{ tooltip.style.display = 'none'; });
+});
+</script>
 
 </body>
 </html>
