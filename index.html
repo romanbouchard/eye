@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Explorateur de fichiers - √20,1</title>
+<title>Explorateur de fichiers - √21,1</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
@@ -17,17 +17,16 @@
   .file::before { content: "📄 "; }
   .locked::before { content: "🔒 "; }
 
-  .infoBtn { cursor:pointer; font-weight:bold; color:#444; margin-left:8px; font-size:22px; padding:6px 10px; border-radius:5px; background:#dbeafe; transition:background 0.2s; }
+  .infoBtn { cursor:pointer; font-weight:bold; color:#444; margin-left:8px; font-size:28px; padding:6px 12px; border-radius:6px; background:#dbeafe; transition:background 0.2s; }
   .infoBtn:hover { color:#000; background:#93c5fd; }
 
   #infoOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; }
   #infoBox { background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4); min-width:250px; max-width:400px; position:relative;}
   #infoClose { cursor:pointer; position:absolute; top:5px; right:10px; font-weight:bold; color:#333; }
 
-  #downloadBtn { margin-top:10px; padding:12px 20px; border:none; background:#1e3a8a; color:#fff; font-weight:bold; cursor:pointer; border-radius:6px; font-size:18px; }
+  #downloadBtn { margin-top:10px; padding:12px 20px; border:none; background:#1e3a8a; color:#fff; font-weight:bold; cursor:pointer; border-radius:6px; font-size:16px; }
   #downloadBtn:hover { background:#2563eb; }
 
-  /* Viewer */
   #viewerOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; backdrop-filter:blur(4px); opacity:0; transition: opacity 0.4s ease; }
   #viewerOverlay.show { display:flex; opacity:1; }
   #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius:10px; transform: scale(0.8); transition: transform 0.4s ease; display:inline-block; }
@@ -42,7 +41,7 @@
   #watermarkImage { height: 4vw; width: auto; }
 
   .videoControls { position: absolute; bottom:10px; left:50%; transform: translateX(-50%); display:flex; gap:15px; align-items:center; z-index:15; background: rgba(0,0,0,0.7); padding:10px 20px; border-radius:10px; opacity:1; transition: opacity 0.5s ease; }
-  .videoButton { width:80px; height:80px; cursor:pointer; }
+  .videoButton { width:60px; height:60px; cursor:pointer; }
 
   #btnRestart { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:20; cursor:pointer; width: 500px; height: 500px; }
 
@@ -65,7 +64,7 @@
   </div>
 </div>
 
-<!-- Viewer -->
+<!-- Viewer modal -->
 <div id="viewerOverlay">
   <div id="viewerBox">
     <img id="btnRestart" class="videoButton" src="par/res.png" />
@@ -107,6 +106,7 @@ const files = {
 
 let currentFile = null;
 
+// --- Création de l'arborescence ---
 function createTree(container,obj){
   for(let key in obj){
     const item=document.createElement('div');
@@ -117,7 +117,7 @@ function createTree(container,obj){
       item.onclick=()=>nested.classList.toggle('show');
       container.appendChild(item); container.appendChild(nested);
     } else {
-      const file=obj[key]; currentFile=file;
+      const file=obj[key]; 
       item.className='file';
       const label=document.createElement("span"); label.textContent=key;
       const info=document.createElement("span"); info.textContent="⋮"; info.className="infoBtn";
@@ -135,6 +135,7 @@ function createTree(container,obj){
   }
 }
 
+// --- Info modal ---
 async function openInfo(file, filename) {
   currentFile=file;
   const overlay = document.getElementById("infoOverlay");
@@ -188,7 +189,6 @@ async function openInfo(file, filename) {
 }
 
 function closeInfo(){ document.getElementById("infoOverlay").style.display="none"; }
-
 function downloadFile(){
   const pin = prompt("Entrez le PIN de téléchargement :");
   if(pin!=="1bananepoilue+1herisson016"){ alert("PIN incorrect !"); return; }
@@ -202,9 +202,99 @@ function downloadFile(){
   }
 }
 
+// --- Viewer complet ---
+function openViewer(path){
+  const overlay=document.getElementById("viewerOverlay");
+  const img=document.getElementById("viewerImage");
+  const blocker=document.getElementById("imageBlocker");
+  const controls=document.getElementById("videoControls");
+  const btnMinus5=document.getElementById("btnMinus5");
+  const btnPlayPause=document.getElementById("btnPlayPause");
+  const btnPlus15=document.getElementById("btnPlus15");
+  const btnMute=document.getElementById("btnMute");
+  const btnRestart=document.getElementById("btnRestart");
+  const watermarkContainer=document.getElementById("watermarkContainer");
+
+  const oldVideo=document.getElementById("viewerVideo");
+  if(oldVideo) oldVideo.remove();
+  const oldAudio=document.getElementById("viewerAudio");
+  if(oldAudio) oldAudio.remove();
+
+  controls.style.display="none";
+  btnRestart.style.display="none";
+
+  const ext=path.split('.').pop().toLowerCase();
+  overlay.classList.add("show");
+  watermarkContainer.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "flex":"none";
+
+  if(["png","jpg","jpeg","webp","gif"].includes(ext)){
+    img.style.display="block"; img.classList.remove("show"); img.src=path;
+    img.onload=()=>{ blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show"); };
+  } else if(["mp4","webm","ogg"].includes(ext)){
+    img.style.display="none";
+    const video=document.createElement("video");
+    video.id="viewerVideo"; video.src=path; video.autoplay=true;
+    video.style.maxWidth="90vw"; video.style.maxHeight="90vh"; video.style.borderRadius="8px";
+    video.style.boxShadow="0 6px 15px rgba(0,0,0,0.5)"; video.style.position="relative"; video.classList.add("show");
+    document.getElementById("viewerBox").appendChild(video);
+
+    video.onloadedmetadata=()=>{
+      blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
+      controls.style.display="flex";
+
+      let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
+
+      btnPlayPause.onclick=()=>{ if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; }else{ video.pause(); btnPlayPause.src="par/1.png"; } };
+      btnMinus5.onclick=()=>{ video.currentTime=Math.max(0,video.currentTime-5); };
+      btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
+      btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
+
+      video.onended = () => { btnRestart.style.display="block"; };
+      btnRestart.onclick = () => { video.currentTime=0; video.play(); btnRestart.style.display="none"; };
+    };
+  } else if(["mp3","wav"].includes(ext)){
+    img.style.display="none";
+    const audio=document.createElement("audio");
+    audio.id="viewerAudio";
+    audio.src=path;
+    audio.controls=true;
+    audio.autoplay=true;
+    audio.style.width="80vw";
+    audio.style.borderRadius="8px";
+    document.getElementById("viewerBox").appendChild(audio);
+
+    watermarkContainer.style.display="none";
+    controls.style.display="none";
+  } else { alert("Format non supporté !"); }
+}
+
+function closeViewer(){
+  const overlay=document.getElementById("viewerOverlay");
+  const img=document.getElementById("viewerImage");
+  const video=document.getElementById("viewerVideo");
+  const audio=document.getElementById("viewerAudio");
+  const controls=document.getElementById("videoControls");
+  const btnRestart=document.getElementById("btnRestart");
+
+  img.classList.remove("show");
+  if(video) video.classList.remove("show");
+  overlay.classList.remove("show");
+  controls.style.display="none"; btnRestart.style.display="none";
+  controls.querySelectorAll('img').forEach(b=>b.onclick=null);
+  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); },400);
+}
+
+// Création de l'arborescence
 createTree(document.getElementById('fileTree'), files);
 
-// viewer reste inchangé (tu peux coller ton code viewer ici)
+let fadeTimeout;
+function showControls(){
+  const controls=document.getElementById("videoControls");
+  controls.style.opacity=1;
+  clearTimeout(fadeTimeout);
+  fadeTimeout=setTimeout(()=>{ controls.style.opacity=0; },5000);
+}
+document.getElementById("viewerBox").addEventListener("mousemove", showControls);
 </script>
 
 <div id="copyrightNotice">⚠️ Tous les contenus diffusés sur ce site ont été créés par moi ou trouvés sur Google. 
