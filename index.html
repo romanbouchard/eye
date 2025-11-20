@@ -7,7 +7,7 @@
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
   #fileTree { background: #fff; border-radius: 10px; box-shadow: 0 6px 15px rgba(0,0,0,0.25); padding: 15px; max-width: 400px; }
-  .folder, .file { margin: 6px 0; cursor: pointer; padding: 6px 12px; border-radius: 5px; transition: background 0.2s, transform 0.2s; }
+  .folder, .file { margin: 6px 0; cursor: pointer; padding: 6px 12px; border-radius: 5px; transition: background 0.2s, transform 0.2s; display:flex; justify-content:space-between; align-items:center;}
   .folder { font-weight: bold; color: #1e40af; }
   .file { color: #2563eb; }
   .folder:hover, .file:hover { background: #dbeafe; transform: scale(1.03); }
@@ -17,6 +17,14 @@
   .file::before { content: "📄 "; }
   .locked::before { content: "🔒 "; }
 
+  .infoBtn { cursor:pointer; font-weight:bold; color:#444; margin-left:8px; }
+  .infoBtn:hover { color:#000; }
+
+  #infoOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; }
+  #infoBox { background:#fff; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.4); min-width:250px; max-width:400px; position:relative;}
+  #infoClose { cursor:pointer; position:absolute; top:5px; right:10px; font-weight:bold; color:#333; }
+
+  /* Le reste de ton CSS existant pour viewer, watermark, controls etc. */
   #viewerOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; backdrop-filter:blur(4px); opacity:0; transition: opacity 0.4s ease; }
   #viewerOverlay.show { display:flex; opacity:1; }
   #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius:10px; transform: scale(0.8); transition: transform 0.4s ease; display:inline-block; }
@@ -26,68 +34,36 @@
   #viewerImage.show, #viewerVideo.show { opacity:1; }
   #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
-  #watermarkContainer {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    pointer-events: none;
-    z-index: 12;
-    white-space: nowrap;
-  }
+  #watermarkContainer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; pointer-events: none; z-index: 12; white-space: nowrap; }
   #watermark { font-size: 2vw; color: rgba(238,13,13,1); font-weight: bold; margin-right: 1vw; }
   #watermarkImage { height: 4vw; width: auto; }
 
-  .videoControls {
-    position: absolute;
-    bottom:10px; left:50%;
-    transform: translateX(-50%);
-    display:flex; gap:15px; align-items:center;
-    z-index:15;
-    background: rgba(0,0,0,0.7);
-    padding:10px 20px;
-    border-radius:10px;
-    opacity:1;
-    transition: opacity 0.5s ease;
-  }
+  .videoControls { position: absolute; bottom:10px; left:50%; transform: translateX(-50%); display:flex; gap:15px; align-items:center; z-index:15; background: rgba(0,0,0,0.7); padding:10px 20px; border-radius:10px; opacity:1; transition: opacity 0.5s ease; }
   .videoButton { width:60px; height:60px; cursor:pointer; }
 
-  #btnRestart {
-    display:none;
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%, -50%);
-    z-index:20;
-    cursor:pointer;
-    width: 500px;
-    height: 500px;
-  }
+  #btnRestart { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:20; cursor:pointer; width: 500px; height: 500px; }
 
-  #copyrightNotice {
-    position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    font-size: 0.7vw;
-    padding: 8px 16px;
-    border-radius: 8px;
-    z-index: 20;
-    text-align: center;
-    font-family: 'Segoe UI', sans-serif;
-    pointer-events: none;
-  }
+  #copyrightNotice { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.7vw; padding: 8px 16px; border-radius: 8px; z-index: 20; text-align: center; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
 </style>
+
+<!-- EXIF JS -->
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
 </head>
 <body>
 
 <h2>Explorateur de fichiers</h2>
 <div id="fileTree"></div>
 
+<!-- Info modal -->
+<div id="infoOverlay">
+  <div id="infoBox">
+    <div id="infoClose" onclick="closeInfo()">X</div>
+    <h3>Informations du fichier</h3>
+    <div id="infoContent"></div>
+  </div>
+</div>
+
+<!-- Viewer existant -->
 <div id="viewerOverlay">
   <div id="viewerBox">
     <img id="btnRestart" class="videoButton" src="par/res.png" />
@@ -144,8 +120,16 @@ function createTree(container,obj){
       item.onclick=()=>nested.classList.toggle('show');
       container.appendChild(item); container.appendChild(nested);
     } else {
-      const file=obj[key]; item.textContent=key; item.className='file';
-      if(file.pin)item.classList.add('locked');
+      const file=obj[key];
+      item.className='file';
+      // Label + info button
+      const label=document.createElement("span"); label.textContent=key;
+      const info=document.createElement("span"); info.textContent="⋮"; info.className="infoBtn";
+      info.onclick=(e)=>{ e.stopPropagation(); openInfo(file,key); };
+      item.appendChild(label); item.appendChild(info);
+
+      if(file.pin) item.classList.add('locked');
+
       item.onclick=()=>{
         if(file.pin){ const p=prompt("Entrez le PIN :"); if(p!==file.pin){alert("PIN incorrect !"); return;} }
         openViewer(file.path);
@@ -154,6 +138,54 @@ function createTree(container,obj){
     }
   }
 }
+
+async function openInfo(file, filename) {
+  const overlay = document.getElementById("infoOverlay");
+  const content = document.getElementById("infoContent");
+  const url = file.path;
+  const ext = url.split(".").pop().toLowerCase();
+  let infos = { nom: filename, taille:"Chargement...", dimensions:"–", longueur:"–", date:"–", lieu:"–", pris_par:"–" };
+
+  try {
+    const head = await fetch(url,{ method:"HEAD" });
+    const size = head.headers.get("Content-Length");
+    if(size) infos.taille=(size/1024/1024).toFixed(2)+" Mo";
+  } catch {}
+
+  if(["jpg","jpeg","png","webp"].includes(ext)){
+    const img = new Image(); img.src=url;
+    img.onload = () => {
+      infos.dimensions = img.width+" x "+img.height;
+      EXIF.getData(img,function(){
+        const date=EXIF.getTag(this,"DateTimeOriginal");
+        const lat=EXIF.getTag(this,"GPSLatitude");
+        const lon=EXIF.getTag(this,"GPSLongitude");
+        if(date) infos.date=date;
+        if(lat && lon) infos.lieu=lat+" / "+lon;
+        showInfo();
+      });
+      showInfo();
+    };
+  } else if(["mp4","webm","ogg"].includes(ext)){
+    const vid = document.createElement("video"); vid.src=url;
+    vid.onloadedmetadata = () => { infos.longueur = vid.duration.toFixed(1)+" sec"; infos.dimensions=vid.videoWidth+" x "+vid.videoHeight; showInfo(); };
+  } else { showInfo(); }
+
+  function showInfo(){
+    content.innerHTML=`
+      <p><strong>Nom :</strong> ${infos.nom}</p>
+      <p><strong>Taille :</strong> ${infos.taille}</p>
+      <p><strong>Dimensions :</strong> ${infos.dimensions}</p>
+      <p><strong>Durée :</strong> ${infos.longueur}</p>
+      <p><strong>Date prise :</strong> ${infos.date}</p>
+      <p><strong>Lieu pris :</strong> ${infos.lieu}</p>
+      <p><strong>Pris par :</strong> ${infos.pris_par}</p>
+    `;
+    overlay.style.display="flex";
+  }
+}
+
+function closeInfo(){ document.getElementById("infoOverlay").style.display="none"; }
 
 function openViewer(path){
   const overlay=document.getElementById("viewerOverlay");
@@ -167,14 +199,10 @@ function openViewer(path){
   const btnRestart=document.getElementById("btnRestart");
   const watermarkContainer=document.getElementById("watermarkContainer");
 
-  // Supprimer ancien media
-  const oldVideo=document.getElementById("viewerVideo");
-  if(oldVideo) oldVideo.remove();
-  const oldAudio=document.getElementById("viewerAudio");
-  if(oldAudio) oldAudio.remove();
+  const oldVideo=document.getElementById("viewerVideo"); if(oldVideo) oldVideo.remove();
+  const oldAudio=document.getElementById("viewerAudio"); if(oldAudio) oldAudio.remove();
 
-  controls.style.display="none";
-  btnRestart.style.display="none";
+  controls.style.display="none"; btnRestart.style.display="none";
 
   const ext=path.split('.').pop().toLowerCase();
   overlay.classList.add("show");
@@ -217,9 +245,7 @@ function openViewer(path){
     audio.style.borderRadius="8px";
     document.getElementById("viewerBox").appendChild(audio);
 
-    // Pas de watermark sur audio
-    watermarkContainer.style.display="none";
-    controls.style.display="none";
+    watermarkContainer.style.display="none"; controls.style.display="none";
   } else { alert("Format non supporté !"); }
 }
 
