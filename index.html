@@ -19,6 +19,18 @@
   width:100%;
   box-sizing:border-box;
 }
+.file span:first-child,
+.folder span:first-child {
+  flex:1;
+  min-width:0;              /* indispensable pour ellipsis en flex */
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.infoBtn {
+  margin-left:auto;         /* au lieu de space-between */
+}
 
   .folder { font-weight: bold; color: #1e40af; }
   .file { color: #2563eb; }
