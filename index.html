@@ -3,45 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <title>Explorateur de fichiers - √21,1</title>
+
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
   #fileTree { background: #fff; border-radius: 10px; box-shadow: 0 6px 15px rgba(0,0,0,0.25); padding: 15px; max-width: 400px; }
-  .folder, .file {
-  margin: 6px 0;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 5px;
-  transition: background 0.2s, transform 0.2s;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  box-sizing:border-box;
-}
-.file span:first-child,
-.folder span:first-child {
-  flex:1;
-  min-width:0;              /* indispensable pour ellipsis en flex */
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
 
-.infoBtn {
-  margin-left:auto;         /* au lieu de space-between */
-}
+  .folder, .file {
+    margin: 6px 0;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 5px;
+    transition: background 0.2s, transform 0.2s;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    box-sizing:border-box;
+  }
+
+  .file span:first-child,
+  .folder span:first-child {
+    flex:1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .infoBtn { margin-left:auto; }
 
   .folder { font-weight: bold; color: #1e40af; }
   .file { color: #2563eb; }
+
   .folder:hover, .file:hover { background: #dbeafe; transform: scale(1.03); }
+
   .nested { margin-left: 20px; display: none; opacity: 0; transition: opacity 0.3s ease, max-height 0.3s ease; max-height: 0; }
   .nested.show { display: block; opacity: 1; max-height: 500px; }
+
   .folder::before { content: "📁 "; }
   .file::before { content: "📄 "; }
   .locked::before { content: "🔒 "; }
 
-  .infoBtn { cursor:pointer; font-weight:bold; color:#444; margin-left:8px; font-size:28px; padding:6px 12px; border-radius:6px; background:#dbeafe; transition:background 0.2s; }
+  .infoBtn {
+    cursor:pointer; font-weight:bold; color:#444; margin-left:8px;
+    font-size:28px; padding:6px 12px; border-radius:6px;
+    background:#dbeafe; transition:background 0.2s;
+  }
   .infoBtn:hover { color:#000; background:#93c5fd; }
 
   #infoOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center; }
@@ -53,11 +61,24 @@
 
   #viewerOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; backdrop-filter:blur(4px); opacity:0; transition: opacity 0.4s ease; }
   #viewerOverlay.show { display:flex; opacity:1; }
+
   #viewerBox { position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.5); border-radius:10px; transform: scale(0.8); transition: transform 0.4s ease; display:inline-block; }
   #viewerOverlay.show #viewerBox { transform: scale(1); }
+
   #viewerClose { position: absolute; top:-40px; right:0; font-size:28px; cursor:pointer; font-weight:bold; color:#fff; z-index:10; }
-  #viewerImage, #viewerVideo { display:block; max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 6px 15px rgba(0,0,0,0.5); transition: opacity 0.4s ease; opacity:0; }
+
+  #viewerImage, #viewerVideo {
+    display:block;
+    max-width:90vw;
+    max-height:90vh;
+    border-radius:8px;
+    box-shadow:0 6px 15px rgba(0,0,0,0.5);
+    transition: opacity 0.4s ease;
+    opacity:0;
+  }
+
   #viewerImage.show, #viewerVideo.show { opacity:1; }
+
   #imageBlocker { position:absolute; top:0; left:0; width:100%; height:100%; z-index:5; }
 
   #watermarkContainer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; pointer-events: none; z-index: 12; white-space: nowrap; }
@@ -71,8 +92,10 @@
 
   #copyrightNotice { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.7vw; padding: 8px 16px; border-radius: 8px; z-index: 20; text-align: center; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
 </style>
+
 <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
 </head>
+
 <body>
 
 <h2>Explorateur de fichiers</h2>
@@ -83,11 +106,14 @@
   <div id="infoBox">
     <div id="infoClose" onclick="closeInfo()">X</div>
     <h3>Informations du fichier</h3>
+
     <div id="infoContent"></div>
+
     <div id="fileIDContainer" style="margin-top:10px; margin-bottom:5px; display:flex; align-items:center; gap:10px;">
       <span id="fileID" style="font-weight:bold;"></span>
       <button onclick="copyFileID()" style="padding:4px 8px; cursor:pointer;">Copier</button>
     </div>
+
     <button id="downloadBtn" onclick="downloadFile()">Télécharger</button>
   </div>
 </div>
@@ -97,6 +123,7 @@
   <div id="viewerBox">
     <img id="btnRestart" class="videoButton" src="par/res.png" />
     <div id="viewerClose" onclick="closeViewer()">X</div>
+
     <img id="viewerImage" src="">
     <div id="imageBlocker"></div>
 
@@ -123,22 +150,22 @@ const files = {
     "momo86.jpg": { path: "images/momo86.jpg", pin: null },
     "pin_6969.webp": { path: "images/pin_6969.webp", pin: "6969" },
     "basam.webp": { path: "images/basam.webp", pin: null },
-  "1000024398.webp": { path: "images/1000024398.webp", pin: null },
-  "image_1.webp": { path: "images/image_1.webp", pin: null },
+    "1000024398.webp": { path: "images/1000024398.webp", pin: null },
+    "image_1.webp": { path: "images/image_1.webp", pin: null },
     "1incorrect_2incorrect_3correct.webp": { path: "images/1incorrect_2incorrect_3correct.webp", pin: null },
-  "drunch.webp": { path: "images/drunch.webp", pin: null }
+    "drunch.webp": { path: "images/drunch.webp", pin: null }
   },
   videos: {
     "franco1short_9x16.mp4": { path: "videos/franco1short_9x16.mp4", pin: "cacahuète43" },
     "shokofama.mp4": { path: "videos/shokofama.mp4", pin: null },
     "suck1.mp4": { path: "videos/suck1.mp4", pin: null },
-  "suck2.mp4": { path: "videos/suck2.mp4", pin: null },
-  "suck3.mp4": { path: "videos/suck3.mp4", pin: null },
-  "هل هم طبيعيون - جوني سينس (3) (1).mp4": { path: "videos/هل هم طبيعيون - جوني سينس (3) (1).mp4", pin: "sin" },
+    "suck2.mp4": { path: "videos/suck2.mp4", pin: null },
+    "suck3.mp4": { path: "videos/suck3.mp4", pin: null },
+    "هل هم طبيعيون - جوني سينس (3) (1).mp4": { path: "videos/هل هم طبيعيون - جوني سينس (3) (1).mp4", pin: "sin" },
     "gif.mp4": { path: "videos/gif.mp4", pin: null },
     "XJP.mp4": { path: "videos/Xin jin ping (pong) naked simulator V1.432.mp4", pin: "yes_omerta" },
     "lv_0_20251120165138.mp4": { path: "videos/lv_0_20251120165138.mp4", pin: null },
-     "sorrynotsory.gif": { path: "videos/sorrynotsory.gif", pin: null },
+    "sorrynotsory.gif": { path: "videos/sorrynotsory.gif", pin: null },
     "11mamoutlaineuxdanmontroupersonel.mp4": { path: "videos/11mamoutlaineuxdanmontroupersonel.mp4", pin: "grosQ" }
   },
   audio: {
@@ -152,42 +179,79 @@ let currentFile = null;
 function createTree(container,obj){
   for(let key in obj){
     const item=document.createElement('div');
+
     if(typeof obj[key]==='object' && obj[key].path===undefined){
-      item.textContent=key; item.className='folder';
-      const nested=document.createElement('div'); nested.className='nested';
+      item.textContent=key;
+      item.className='folder';
+
+      const nested=document.createElement('div');
+      nested.className='nested';
+
       createTree(nested,obj[key]);
+
       item.onclick=()=>nested.classList.toggle('show');
-      container.appendChild(item); container.appendChild(nested);
+
+      container.appendChild(item);
+      container.appendChild(nested);
     } else {
-      const file=obj[key]; 
+      const file=obj[key];
       item.className='file';
-      const label=document.createElement("span"); label.textContent=key;
-      const info=document.createElement("span"); info.textContent="⋮"; info.className="infoBtn";
-      info.onclick=(e)=>{ e.stopPropagation(); openInfo(file,key); };
-      item.appendChild(label); item.appendChild(info);
+
+      const label=document.createElement("span");
+      label.textContent=key;
+
+      const info=document.createElement("span");
+      info.textContent="⋮";
+      info.className="infoBtn";
+
+      info.onclick=(e)=>{
+        e.stopPropagation();
+        openInfo(file,key);
+      };
+
+      item.appendChild(label);
+      item.appendChild(info);
 
       if(file.pin) item.classList.add('locked');
 
       item.onclick=()=>{
-        if(file.pin){ const p=prompt("Entrez le PIN :"); if(p!==file.pin){alert("PIN incorrect !"); return;} }
+        if(file.pin){
+          const p=prompt("Entrez le PIN :");
+          if(p!==file.pin){
+            alert("PIN incorrect !");
+            return;
+          }
+        }
         openViewer(file.path);
       };
+
       container.appendChild(item);
     }
   }
 }
 
-// --- Info modal ---
+/* --- Info modal --- */
 async function openInfo(file, filename) {
   currentFile=file;
+
   const overlay = document.getElementById("infoOverlay");
   const content = document.getElementById("infoContent");
   const fileID = document.getElementById("fileID");
+
   const url = file.path;
   const ext = url.split(".").pop().toLowerCase();
-  let infos = { nom: filename, taille:"Chargement...", dimensions:"–", longueur:"–", date:"–", lieu:"–", type:"–", lastModified:"–" };
 
-  // Génération ID aléatoire 6 chiffres
+  let infos = {
+    nom: filename,
+    taille:"Chargement...",
+    dimensions:"–",
+    longueur:"–",
+    date:"–",
+    lieu:"–",
+    type:"–",
+    lastModified:"–"
+  };
+
   const randID = Math.floor(100000 + Math.random() * 900000);
   fileID.textContent = randID;
 
@@ -196,29 +260,44 @@ async function openInfo(file, filename) {
     const size = head.headers.get("Content-Length");
     const lastMod = head.headers.get("Last-Modified");
     const mime = head.headers.get("Content-Type");
+
     if(size) infos.taille=(size/1024/1024).toFixed(2)+" Mo";
     if(lastMod) infos.lastModified=lastMod;
     if(mime) infos.type=mime;
   } catch {}
 
   if(["jpg","jpeg","png","webp"].includes(ext)){
-    const img = new Image(); img.src=url;
+    const img = new Image();
+    img.src=url;
+
     img.onload = () => {
       infos.dimensions = img.width+" x "+img.height;
+
       EXIF.getData(img,function(){
         const date=EXIF.getTag(this,"DateTimeOriginal");
         const lat=EXIF.getTag(this,"GPSLatitude");
         const lon=EXIF.getTag(this,"GPSLongitude");
+
         if(date) infos.date=date;
         if(lat && lon) infos.lieu=lat+" / "+lon;
+
         showInfo();
       });
+
       showInfo();
     };
+
   } else if(["mp4","webm","ogg"].includes(ext)){
-    const vid = document.createElement("video"); vid.src=url;
-    vid.onloadedmetadata = () => { infos.longueur = vid.duration.toFixed(1)+" sec"; infos.dimensions=vid.videoWidth+" x "+vid.videoHeight; showInfo(); };
-  } else { showInfo(); }
+    const vid = document.createElement("video");
+    vid.src=url;
+
+    vid.onloadedmetadata = () => {
+      infos.longueur = vid.duration.toFixed(1)+" sec";
+      infos.dimensions=vid.videoWidth+" x "+vid.videoHeight;
+      showInfo();
+    };
+  }
+  else showInfo();
 
   function showInfo(){
     content.innerHTML=`
@@ -237,13 +316,21 @@ async function openInfo(file, filename) {
 
 function copyFileID(){
   const fileID = document.getElementById("fileID").textContent;
-  navigator.clipboard.writeText(fileID).then(()=>{ alert("ID copié: "+fileID); });
+  navigator.clipboard.writeText(fileID)
+    .then(()=>{ alert("ID copié: "+fileID); });
 }
 
-function closeInfo(){ document.getElementById("infoOverlay").style.display="none"; }
+function closeInfo(){
+  document.getElementById("infoOverlay").style.display="none";
+}
+
 function downloadFile(){
   const pin = prompt("Entrez le PIN de téléchargement :");
-  if(pin!=="1bananepoilue+1herisson016"){ alert("PIN incorrect !"); return; }
+  if(pin!=="1bananepoilue+1herisson016"){
+    alert("PIN incorrect !");
+    return;
+  }
+
   if(currentFile){
     const a = document.createElement("a");
     a.href=currentFile.path;
@@ -254,7 +341,7 @@ function downloadFile(){
   }
 }
 
-// --- Viewer complet ---
+/* --- Viewer --- */
 function openViewer(path){
   const overlay=document.getElementById("viewerOverlay");
   const img=document.getElementById("viewerImage");
@@ -269,6 +356,7 @@ function openViewer(path){
 
   const oldVideo=document.getElementById("viewerVideo");
   if(oldVideo) oldVideo.remove();
+
   const oldAudio=document.getElementById("viewerAudio");
   if(oldAudio) oldAudio.remove();
 
@@ -276,48 +364,95 @@ function openViewer(path){
   btnRestart.style.display="none";
 
   const ext=path.split('.').pop().toLowerCase();
+
   overlay.classList.add("show");
-  watermarkContainer.style.display = ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext) ? "flex":"none";
+
+  watermarkContainer.style.display =
+    ["png","jpg","jpeg","webp","gif","mp4","webm","ogg"].includes(ext)
+      ? "flex"
+      : "none";
 
   if(["png","jpg","jpeg","webp","gif"].includes(ext)){
-    img.style.display="block"; img.classList.remove("show"); img.src=path;
-    img.onload=()=>{ blocker.style.width=img.offsetWidth+"px"; blocker.style.height=img.offsetHeight+"px"; img.classList.add("show"); };
-  } else if(["mp4","webm","ogg"].includes(ext)){
+    img.style.display="block";
+    img.classList.remove("show");
+    img.src=path;
+
+    img.onload=()=>{
+      blocker.style.width=img.offsetWidth+"px";
+      blocker.style.height=img.offsetHeight+"px";
+      img.classList.add("show");
+    };
+  }
+
+  else if(["mp4","webm","ogg"].includes(ext)){
     img.style.display="none";
+
     const video=document.createElement("video");
-    video.id="viewerVideo"; video.src=path; video.autoplay=true;
-    video.style.maxWidth="90vw"; video.style.maxHeight="90vh"; video.style.borderRadius="8px";
-    video.style.boxShadow="0 6px 15px rgba(0,0,0,0.5)"; video.style.position="relative"; video.classList.add("show");
+    video.id="viewerVideo";
+    video.src=path;
+    video.autoplay=true;
+    video.classList.add("show");
+    video.style.maxWidth="90vw";
+    video.style.maxHeight="90vh";
+    video.style.borderRadius="8px";
+
     document.getElementById("viewerBox").appendChild(video);
 
     video.onloadedmetadata=()=>{
-      blocker.style.width=video.offsetWidth+"px"; blocker.style.height=video.offsetHeight+"px";
+      blocker.style.width=video.offsetWidth+"px";
+      blocker.style.height=video.offsetHeight+"px";
+
       controls.style.display="flex";
 
-      let muted=false; btnMute.src="par/on.png"; btnPlayPause.src="par/2.png";
+      let muted=false;
+      btnMute.src="par/on.png";
+      btnPlayPause.src="par/2.png";
 
-      btnPlayPause.onclick=()=>{ if(video.paused){ video.play(); btnPlayPause.src="par/2.png"; }else{ video.pause(); btnPlayPause.src="par/1.png"; } };
-      btnMinus5.onclick=()=>{ video.currentTime=Math.max(0,video.currentTime-5); };
-      btnPlus15.onclick=()=>{ video.currentTime=Math.min(video.duration,video.currentTime+15); };
-      btnMute.onclick=()=>{ muted=!muted; video.muted=muted; btnMute.src=muted?"par/off.png":"par/on.png"; };
+      btnPlayPause.onclick=()=>{
+        if(video.paused){
+          video.play();
+          btnPlayPause.src="par/2.png";
+        } else {
+          video.pause();
+          btnPlayPause.src="par/1.png";
+        }
+      };
+
+      btnMinus5.onclick=()=> video.currentTime=Math.max(0,video.currentTime-5);
+      btnPlus15.onclick=()=> video.currentTime=Math.min(video.duration,video.currentTime+15);
+
+      btnMute.onclick=()=>{
+        muted=!muted;
+        video.muted=muted;
+        btnMute.src=muted?"par/off.png":"par/on.png";
+      };
 
       video.onended = () => { btnRestart.style.display="block"; };
-      btnRestart.onclick = () => { video.currentTime=0; video.play(); btnRestart.style.display="none"; };
+      btnRestart.onclick = () => {
+        video.currentTime=0;
+        video.play();
+        btnRestart.style.display="none";
+      };
     };
-  } else if(["mp3","wav"].includes(ext)){
+  }
+
+  else if(["mp3","wav"].includes(ext)){
     img.style.display="none";
+
     const audio=document.createElement("audio");
     audio.id="viewerAudio";
     audio.src=path;
     audio.controls=true;
     audio.autoplay=true;
     audio.style.width="80vw";
-    audio.style.borderRadius="8px";
+
     document.getElementById("viewerBox").appendChild(audio);
 
     watermarkContainer.style.display="none";
     controls.style.display="none";
-  } else { alert("Format non supporté !"); }
+  }
+
+  else alert("Format non supporté !");
 }
 
 function closeViewer(){
@@ -330,28 +465,40 @@ function closeViewer(){
 
   img.classList.remove("show");
   if(video) video.classList.remove("show");
+
   overlay.classList.remove("show");
-  controls.style.display="none"; btnRestart.style.display="none";
+  controls.style.display="none";
+  btnRestart.style.display="none";
+
   controls.querySelectorAll('img').forEach(b=>b.onclick=null);
-  setTimeout(()=>{ img.src=""; if(video) video.remove(); if(audio) audio.remove(); },400);
+
+  setTimeout(()=>{
+    img.src="";
+    if(video) video.remove();
+    if(audio) audio.remove();
+  },400);
 }
 
-// Création de l'arborescence
 createTree(document.getElementById('fileTree'), files);
 
 let fadeTimeout;
 function showControls(){
   const controls=document.getElementById("videoControls");
   controls.style.opacity=1;
+
   clearTimeout(fadeTimeout);
   fadeTimeout=setTimeout(()=>{ controls.style.opacity=0; },5000);
 }
+
 document.getElementById("viewerBox").addEventListener("mousemove", showControls);
 </script>
 
-<div id="copyrightNotice">⚠️ Tous les contenus diffusés sur ce site ont été créés par moi ou trouvés sur Google. 
-Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation, 
-veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong> pour demander son retrait. 
-Votre requête sera traitée rapidement afin de respecter vos droits.</div>
+<div id="copyrightNotice">
+  ⚠️ Tous les contenus diffusés sur ce site ont été créés par moi ou trouvés sur Google.
+  Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation,
+  veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong> pour demander son retrait.
+  Votre requête sera traitée rapidement afin de respecter vos droits.
+</div>
+
 </body>
 </html>
