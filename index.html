@@ -5,7 +5,6 @@
 <title>Explorateur de fichiers - √21,1</title>
 
 <style>
-  /* (tout ton CSS est inchangé) */
   body { font-family: 'Segoe UI', sans-serif; background: #e0e7ff; padding: 20px; }
   h2 { color: #1e3a8a; text-shadow: 1px 1px 2px #aaa; }
   #fileTree { background: #fff; border-radius: 10px; box-shadow: 0 6px 15px rgba(0,0,0,0.25); padding: 15px; max-width: 400px; }
@@ -231,16 +230,16 @@ function createTree(container,obj){
 
       if(file.pin) item.classList.add('locked');
 
-      /* ======= CLICK LOGIC ======= */
+      /* ======= CLICK LOGIC (UNIQUE) ======= */
       item.onclick = () => {
 
-        // ⬇️ UNIQUEMENT dossier download = téléchargement direct
+        // Téléchargement direct pour le dossier download/
         if (file.path.startsWith("download/")) {
           triggerDownload(file.path);
           return;
         }
 
-        // PIN obligatoire uniquement pour les autres dossiers
+        // Protection par PIN si nécessaire
         if (file.pin) {
           const p = prompt("Entrez le PIN :");
           if (p !== file.pin) {
@@ -249,7 +248,7 @@ function createTree(container,obj){
           }
         }
 
-        // Sinon → ouverture dans viewer
+        // Sinon ouverture dans viewer
         openViewer(file.path);
       };
 
@@ -258,13 +257,126 @@ function createTree(container,obj){
   }
 }
 
-/* --- Info / viewer / autres fonctions : inchangées --- */
+/* --- Info modal --- */
+async function openInfo(file, filename) {
+  currentFile=file;
+
+  const overlay = document.getElementById("infoOverlay");
+  const content = document.getElementById("infoContent");
+  const fileID = document.getElementById("fileID");
+
+  const url = file.path;
+  const ext = url.split(".").pop().toLowerCase();
+
+  let infos = {
+    nom: filename,
+    taille:"Chargement...",
+    dimensions:"–",
+    longueur:"–",
+    date:"–",
+    lieu:"–",
+    type:"–",
+    lastModified:"–"
+  };
+
+  const randID = Math.floor(100000 + Math.random() * 900000);
+  fileID.textContent = randID;
+
+  try {
+    const head = await fetch(url,{ method:"HEAD" });
+    const size = head.headers.get("Content-Length");
+    const lastMod = head.headers.get("Last-Modified");
+    const mime = head.headers.get("Content-Type");
+
+    if(size) infos.taille=(size/1024/1024).toFixed(2)+" Mo";
+    if(lastMod) infos.lastModified=lastMod;
+    if(mime) infos.type=mime;
+  } catch {}
+
+  if(["jpg","jpeg","png","webp"].includes(ext)){
+    const img = new Image();
+    img.src=url;
+
+    img.onload = () => {
+      infos.dimensions = img.width+" x "+img.height;
+
+      EXIF.getData(img,function(){
+        const date=EXIF.getTag(this,"DateTimeOriginal");
+        const lat=EXIF.getTag(this,"GPSLatitude");
+        const lon=EXIF.getTag(this,"GPSLongitude");
+
+        if(date) infos.date=date;
+        if(lat && lon) infos.lieu=lat+" / "+lon;
+
+        showInfo();
+      });
+
+      showInfo();
+    };
+
+  } else if(["mp4","webm","ogg"].includes(ext)){
+    const vid = document.createElement("video");
+    vid.src=url;
+
+    vid.onloadedmetadata = () => {
+      infos.longueur = vid.duration.toFixed(1)+" sec";
+      infos.dimensions=vid.videoWidth+" x "+vid.videoHeight;
+      showInfo();
+    };
+  }
+  else showInfo();
+
+  function showInfo(){
+    content.innerHTML=`
+      <p><strong>Nom :</strong> ${infos.nom}</p>
+      <p><strong>Taille :</strong> ${infos.taille}</p>
+      <p><strong>Dimensions :</strong> ${infos.dimensions}</p>
+      <p><strong>Durée :</strong> ${infos.longueur}</p>
+      <p><strong>Type :</strong> ${infos.type}</p>
+      <p><strong>Date prise :</strong> ${infos.date}</p>
+      <p><strong>Lieu :</strong> ${infos.lieu}</p>
+      <p><strong>Dernière modif :</strong> ${infos.lastModified}</p>
+    `;
+    overlay.style.display="flex";
+  }
+}
+
+function copyFileID(){
+  const fileID = document.getElementById("fileID").textContent;
+  navigator.clipboard.writeText(fileID)
+    .then(()=>{ alert("ID copié: "+fileID); });
+}
+
+function closeInfo(){
+  document.getElementById("infoOverlay").style.display="none";
+}
+
+function downloadFile(){
+  const pin = prompt("Entrez le PIN de téléchargement :");
+  if(pin!=="1bananepoilue+1herisson016"){
+    alert("PIN incorrect !");
+    return;
+  }
+
+  if(currentFile){
+    const a = document.createElement("a");
+    a.href=currentFile.path;
+    a.download=currentFile.path.split("/").pop();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}
+
+/* --- Viewer --- */
+/* (inchangé — intact) */
 </script>
 
 <div id="copyrightNotice">
   ⚠️ Tous les contenus diffusés sur ce site ont été créés par moi ou trouvés sur Google.
   Si vous êtes le détenteur légal d’une œuvre et estimez qu’elle a été utilisée sans autorisation,
-  veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong>.
+  veuillez me contacter immédiatement à <strong>mazmogetjr@gmail.com</strong> pour demander son retrait.
+  Votre requête sera traitée rapidement afin de respecter vos droits.
 </div>
 
 </body>
