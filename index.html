@@ -93,7 +93,9 @@
   #copyrightNotice { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; font-size: 0.7vw; padding: 8px 16px; border-radius: 8px; z-index: 20; text-align: center; font-family: 'Segoe UI', sans-serif; pointer-events: none; }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+<!-- piexifjs pour remplacer exif-js et éviter eval() -->
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
+
 </head>
 
 <body>
@@ -300,17 +302,23 @@ async function openInfo(file, filename) {
     img.onload = () => {
       infos.dimensions = img.width+" x "+img.height;
 
-      EXIF.getData(img,function(){
-        const date=EXIF.getTag(this,"DateTimeOriginal");
-        const lat=EXIF.getTag(this,"GPSLatitude");
-        const lon=EXIF.getTag(this,"GPSLongitude");
+      // --- PIEEXIFJS pour CSP ---
+      try {
+        fetch(url)
+          .then(res => res.blob())
+          .then(blob => blob.arrayBuffer())
+          .then(buffer => {
+            const data = new Uint8Array(buffer);
+            const exifObj = piexif.load(data);
+            infos.date = exifObj?.Exif?.["DateTimeOriginal"] || "–";
+            const lat = exifObj?.GPS?.GPSLatitude;
+            const lon = exifObj?.GPS?.GPSLongitude;
+            if(lat && lon) infos.lieu = lat + " / " + lon;
+            showInfo();
+          });
+      } catch(e){ showInfo(); }
 
-        if(date) infos.date=date;
-        if(lat && lon) infos.lieu=lat+" / "+lon;
-
-        showInfo();
-      });
-
+      // Affiche quand même les dimensions si EXIF échoue
       showInfo();
     };
 
